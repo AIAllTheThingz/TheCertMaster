@@ -2,52 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>QuizAPI Admin Dashboard</title>
+    <title>DevQuizAPI Admin Dashboard</title>
     <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #1d4ed8;
+            --accent-hover: #1e40af;
+            --accent-soft: #dbeafe;
+            --border: #d1d5db;
+            --danger: #b91c1c;
+            --danger-hover: #991b1b;
+            --success-bg: #ecfdf3;
+            --success-text: #166534;
+            --warning-bg: #fff7ed;
+            --warning-text: #9a3412;
+            --error-bg: #fef2f2;
+            --error-text: #991b1b;
+            --shadow: rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 2rem;
-            background: #f5f6fa;
-            color: #2f3640;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 2rem 1rem 4rem;
+            background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+            color: var(--text);
         }
 
-        h1 {
-            color: #273c75;
+        a {
+            color: var(--accent);
         }
 
-        form, #fileTable {
+        main {
+            width: min(1120px, calc(100vw - 2rem));
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            color: var(--text);
+        }
+
+        .hero,
+        form, #fileTable, #userManager, #smtpSettings, #quizSection, #historySection {
             margin-bottom: 1.5rem;
-            background: white;
+            background: var(--panel);
             padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            box-shadow: 0 18px 40px var(--shadow);
         }
 
-        input, button {
+        .hero {
+            padding: 2rem;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .lead {
+            max-width: 760px;
+            margin: 0.75rem 0 0;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .page-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.85rem;
+            margin-top: 1.25rem;
+        }
+
+        .page-nav a {
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        label {
+            font-weight: 600;
+            color: #334155;
+        }
+
+        input, select, button {
             font-size: 1rem;
-            padding: 0.5rem;
+            padding: 0.7rem 0.85rem;
             margin-top: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        input, select {
+            min-width: 220px;
+            background: #fff;
+            color: var(--text);
         }
 
         button {
             cursor: pointer;
-            background-color: #273c75;
+            background-color: var(--accent);
             color: white;
-            border: none;
-            border-radius: 5px;
+            border: 1px solid var(--accent);
+            font-weight: 700;
         }
 
-            button:hover {
-                background-color: #40739e;
-            }
+        button:hover {
+            background-color: var(--accent-hover);
+        }
 
         .danger {
-            background-color: #c23616;
+            background-color: var(--danger);
+            border-color: var(--danger);
         }
 
-            .danger:hover {
-                background-color: #e84118;
-            }
+        .danger:hover {
+            background-color: var(--danger-hover);
+        }
 
         table {
             width: 100%;
@@ -56,39 +141,82 @@
         }
 
         th, td {
-            padding: 0.5rem;
-            border-bottom: 1px solid #dcdde1;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
             text-align: left;
         }
 
         #status {
             white-space: pre-wrap;
-            font-family: monospace;
             margin-top: 1rem;
-            color: #192a56;
+            padding: 1rem 1.1rem;
+            border-radius: 14px;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1e3a8a;
+            line-height: 1.6;
         }
-    
-.muted { color: #718093; font-size: 0.95rem; }
-.status { margin-top: 0.5rem; color: #353b48; }
-.pill { display:inline-block; padding:2px 8px; border-radius:12px; background:#dcdde1; font-size:0.85rem; }
-.danger { background:#e84118; color:white; }
-.ok { background:#44bd32; color:white; }
-.warn { background:#fbc531; }
+
+        #status.success {
+            background: var(--success-bg);
+            color: var(--success-text);
+            border-color: #bbf7d0;
+        }
+
+        #status.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border-color: #fecaca;
+        }
+
+        #status.warning {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            border-color: #fed7aa;
+        }
+
+        #uploadAssist {
+            margin-top: 1rem;
+            padding: 0.9rem 1rem;
+            border-left: 4px solid var(--accent);
+            background: #eff6ff;
+            border-radius: 12px;
+        }
+
+        .muted { color: var(--muted); font-size: 0.95rem; }
+        .status { margin-top: 0.5rem; color: #475569; }
+        .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#dbeafe; color:#1d4ed8; font-size:0.85rem; font-weight:700; }
+        .ok { background:#15803d; color:white; }
+        .warn { background:#f59e0b; color:#111827; }
+        .status-inline { display:inline-block; padding:0.55rem 0.8rem; border-radius:12px; border:1px solid transparent; }
+        .status-inline.success { background: var(--success-bg); color: var(--success-text); border-color: #bbf7d0; }
+        .status-inline.error { background: var(--error-bg); color: var(--error-text); border-color: #fecaca; }
 
 </style>
 </head>
 <body>
-    <h1>QuizAPI Admin Panel</h1>
-    <p style="margin-top: -0.5rem;">
-        <a href="/quiz.html">Open Quiz Runner</a>
-    </p>
+    <main>
+    <section class="hero">
+        <div class="eyebrow">DevQuizAPI Admin</div>
+        <h1>Upload, import, and manage quizzes from one place.</h1>
+        <p class="lead">
+            Use this dashboard to sign in as an administrator, upload quiz packages, review imports, manage users,
+            and configure SMTP settings for development or hosted environments.
+        </p>
+        <div class="page-nav">
+            <a href="/">Open Landing Page</a>
+            <a href="/quiz.html">Open Quiz Runner</a>
+            <a href="/swapi.html">Open Swagger API</a>
+        </div>
+    </section>
 
     <form id="loginForm">
         <h3>Admin Login</h3>
         <label>Email:</label><br />
-        <input type="email" id="email" placeholder="admin@quizapi.local" required /><br />
+        <input type="email" id="email" placeholder="admin@quizapi.local" autocomplete="username" required /><br />
         <label>Password:</label><br />
-        <input type="password" id="password" value="Admin@123" required /><br />
+        <input type="password" id="password" placeholder="Enter your admin password" autocomplete="current-password" required /><br />
+        <div class="muted">Development uses a seeded admin account by default. Shared environments should use a non-default admin password.</div>
         <button type="submit">Login</button>
     </form>
 
@@ -113,7 +241,7 @@
         </table>
     </div>
 
-    <div id="status"></div>
+    <div id="status" role="status" aria-live="polite"></div>
 
     <!-- OK Keep this div OUTSIDE #status -->
     <div id="userManager" style="display:none;">
@@ -177,7 +305,7 @@
                 <button type="button" id="smtpReloadBtn">Reload</button>
                 <input type="email" id="smtpTestTo" placeholder="Test email recipient" style="min-width:260px;" />
                 <button type="button" id="smtpTestBtn">Send Test</button>
-                <span class="muted" id="smtpStatus"></span>
+                <span class="muted status-inline" id="smtpStatus"></span>
             </div>
         </form>
     </div>
@@ -237,6 +365,19 @@ const loginForm = document.getElementById("loginForm");
             }
         }
 
+        function setStatus(message, tone = "info") {
+            statusBox.className = tone && tone !== "info" ? tone : "";
+            statusBox.textContent = message;
+        }
+
+        function setSmtpStatus(message, tone = "info") {
+            smtpStatus.className = "muted status-inline";
+            if (tone === "success" || tone === "error") {
+                smtpStatus.classList.add(tone);
+            }
+            smtpStatus.textContent = message;
+        }
+
         function showUploadAssist(message, fileName) {
             pendingImportedCsvName = fileName || null;
             if (!uploadAssist) return;
@@ -275,7 +416,7 @@ const loginForm = document.getElementById("loginForm");
             loadSmtpSettings();
             loadQuizzes();
             loadImportHistory();
-            statusBox.textContent = "Logged in as Admin.";
+            setStatus("Logged in as Admin.", "success");
         }
 
         // Login
@@ -283,7 +424,7 @@ const loginForm = document.getElementById("loginForm");
             e.preventDefault();
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
-            statusBox.textContent = "Logging in...";
+            setStatus("Logging in...");
 
             try {
                 const res = await fetch("/api/auth/login", {
@@ -293,7 +434,7 @@ const loginForm = document.getElementById("loginForm");
                 });
 
                 if (!res.ok) {
-                    statusBox.textContent = "Login failed. Check credentials.";
+                    setStatus("Login failed. Check your email, password, and account lockout state.", "error");
                     return;
                 }
 
@@ -301,7 +442,7 @@ const loginForm = document.getElementById("loginForm");
                 token = data.token;
                 localStorage.setItem("jwtToken", token);
 
-                statusBox.textContent = "Login successful.";
+                setStatus("Login successful. Admin tools are now available.", "success");
                 loginForm.style.display = "none";
                 uploadForm.style.display = "block";
                 fileTable.style.display = "block";
@@ -313,7 +454,7 @@ const loginForm = document.getElementById("loginForm");
                 loadQuizzes();
                 loadImportHistory();
             } catch (err) {
-                statusBox.textContent = "Error: " + err.message;
+                setStatus("Login error: " + err.message, "error");
             }
         });
 
@@ -323,7 +464,7 @@ const loginForm = document.getElementById("loginForm");
             const file = document.getElementById("fileInput").files[0];
             if (!file) return alert("Select a file first!");
 
-            statusBox.textContent = "Uploading " + file.name + "...";
+            setStatus("Uploading " + file.name + "...");
 
             const formData = new FormData();
             formData.append("File", file);
@@ -340,25 +481,27 @@ const loginForm = document.getElementById("loginForm");
                 if (res.ok) {
                     if (isZip) {
                         const data = await res.json();
-                        statusBox.textContent =
-                            "OK Package upload successful:\n" +
+                        setStatus(
+                            "Package upload successful.\n" +
                             `ZIP: ${data.ZipFileName}\n` +
                             `CSV Ready To Import: ${data.CsvFileName}\n` +
-                            `Images Saved: ${data.ImagesSaved}`;
+                            `Images Saved: ${data.ImagesSaved}`,
+                            "success"
+                        );
                         showUploadAssist(`Package processed. Extracted CSV: ${data.CsvFileName}`, data.CsvFileName);
                     } else {
                         const text = await res.text();
-                        statusBox.textContent = "OK Upload successful:\n" + text;
+                        setStatus("Upload successful.\n" + text, "success");
                         showUploadAssist("");
                     }
                     loadFiles();
                 } else {
                     const message = await readErrorResponse(res);
-                    statusBox.textContent = "ERROR Upload failed (" + res.status + "): " + message;
+                    setStatus("Upload failed (" + res.status + "): " + message, "error");
                     showUploadAssist("");
                 }
             } catch (err) {
-                statusBox.textContent = "Error: " + err.message;
+                setStatus("Upload error: " + err.message, "error");
                 showUploadAssist("");
             }
         });
@@ -406,40 +549,40 @@ const loginForm = document.getElementById("loginForm");
         async function processFile(name) {
             const lowerName = (name || "").toLowerCase();
             if (!(lowerName.endsWith(".csv") || lowerName.endsWith(".txt"))) {
-                statusBox.textContent = `ERROR Only extracted CSV/TXT files can be imported. Upload ZIP packages first, then import the extracted CSV.`;
+                setStatus("Only extracted CSV or TXT files can be imported. Upload ZIP packages first, then import the extracted CSV.", "warning");
                 return;
             }
 
             if (!confirm(`Import ${name} into database?`)) return;
-            statusBox.textContent = `Importing ${name}...`;
+            setStatus(`Importing ${name}...`);
             const res = await fetch(`/api/import/process/${encodeURIComponent(name)}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (res.ok) {
                 const text = await res.text();
-                statusBox.textContent = "OK Imported successfully:\n" + text;
+                setStatus("Import completed successfully.\n" + text, "success");
                 showUploadAssist("");
             } else {
                 const message = await readErrorResponse(res);
-                statusBox.textContent = "ERROR Import failed (" + res.status + "): " + message;
+                setStatus("Import failed (" + res.status + "): " + message, "error");
             }
         }
 
         // Delete
         async function deleteFile(name) {
             if (!confirm(`Delete ${name}?`)) return;
-            statusBox.textContent = `Deleting ${name}...`;
+            setStatus(`Deleting ${name}...`);
             const res = await fetch(`/api/files/${encodeURIComponent(name)}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const text = await res.text();
             if (res.ok) {
-                statusBox.textContent = "🗑 Deleted: " + text;
+                setStatus("Deleted: " + text, "success");
                 loadFiles();
             } else {
-                statusBox.textContent = "ERROR Delete failed (" + res.status + "): " + text;
+                setStatus("Delete failed (" + res.status + "): " + text, "error");
             }
         }
 
@@ -474,13 +617,13 @@ const loginForm = document.getElementById("loginForm");
         async function loadSmtpSettings() {
             if (!token) return;
             try {
-                smtpStatus.textContent = 'Loading...';
+                setSmtpStatus('Loading settings...');
                 const res = await fetch('/api/admin/smtp', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) {
                     const t = await res.text();
-                    smtpStatus.textContent = 'Failed to load SMTP: ' + t;
+                    setSmtpStatus('Failed to load SMTP: ' + t, 'error');
                     return;
                 }
                 const s = await res.json();
@@ -492,17 +635,17 @@ const loginForm = document.getElementById("loginForm");
                 smtpPassword.value = ''; // never fill password field
                 smtpUseStartTls.checked = !!s.useStartTls;
                 smtpUseSsl.checked = !!s.useSsl;
-                smtpStatus.textContent = s.passwordSet ? 'Loaded. Password is set.' : 'Loaded. Password is not set.';
+                setSmtpStatus(s.passwordSet ? 'Settings loaded. Password is already set.' : 'Settings loaded. Password is not set yet.', 'success');
             } catch (err) {
                 console.error(err);
-                smtpStatus.textContent = 'Error loading SMTP (see console).';
+                setSmtpStatus('Error loading SMTP settings.', 'error');
             }
         }
 
         async function saveSmtpSettings() {
             if (!token) return;
             try {
-                smtpStatus.textContent = 'Saving...';
+                setSmtpStatus('Saving settings...');
                 const payload = {
                     host: smtpHost.value.trim(),
                     port: parseInt(smtpPort.value || '25', 10),
@@ -524,15 +667,15 @@ const loginForm = document.getElementById("loginForm");
                 });
                 if (!res.ok) {
                     const t = await res.text();
-                    smtpStatus.textContent = 'Save failed: ' + t;
+                    setSmtpStatus('Save failed: ' + t, 'error');
                     return;
                 }
                 smtpPassword.value = '';
-                smtpStatus.textContent = 'Saved.';
+                setSmtpStatus('SMTP settings saved.', 'success');
                 await loadSmtpSettings();
             } catch (err) {
                 console.error(err);
-                smtpStatus.textContent = 'Error saving SMTP (see console).';
+                setSmtpStatus('Error saving SMTP settings.', 'error');
             }
         }
 
@@ -540,11 +683,11 @@ const loginForm = document.getElementById("loginForm");
             if (!token) return;
             const to = (smtpTestTo.value || '').trim();
             if (!to) {
-                smtpStatus.textContent = 'Enter a test recipient email.';
+                setSmtpStatus('Enter a test recipient email.', 'error');
                 return;
             }
             try {
-                smtpStatus.textContent = 'Sending test...';
+                setSmtpStatus('Sending test email...');
                 const res = await fetch('/api/admin/smtp/test', {
                     method: 'POST',
                     headers: {
@@ -555,13 +698,13 @@ const loginForm = document.getElementById("loginForm");
                 });
                 if (!res.ok) {
                     const t = await res.text();
-                    smtpStatus.textContent = 'Test failed: ' + t;
+                    setSmtpStatus('Test failed: ' + t, 'error');
                     return;
                 }
-                smtpStatus.textContent = 'Test email sent.';
+                setSmtpStatus('Test email sent.', 'success');
             } catch (err) {
                 console.error(err);
-                smtpStatus.textContent = 'Error sending test (see console).';
+                setSmtpStatus('Error sending test email.', 'error');
             }
         }
         // SMTP form wiring
@@ -592,10 +735,10 @@ const loginForm = document.getElementById("loginForm");
 
             const text = await res.text();
             if (res.ok) {
-                statusBox.textContent = "OK " + text;
+                setStatus(text, "success");
                 loadUsers();
             } else {
-                statusBox.textContent = "ERROR " + text;
+                setStatus(text, "error");
             }
         });
 
@@ -612,8 +755,8 @@ const loginForm = document.getElementById("loginForm");
                 body: JSON.stringify({ role })
             });
             const text = await res.text();
-            if (res.ok) { statusBox.textContent = "OK " + text; loadUsers(); }
-            else { statusBox.textContent = "ERROR " + text; }
+            if (res.ok) { setStatus(text, "success"); loadUsers(); }
+            else { setStatus(text, "error"); }
         }
 
         async function resetPasswordPrompt(email) {
@@ -631,9 +774,9 @@ const loginForm = document.getElementById("loginForm");
 
             const text = await res.text();
             if (res.ok) {
-                statusBox.textContent = "OK " + text;
+                setStatus(text, "success");
             } else {
-                statusBox.textContent = "ERROR " + text;
+                setStatus(text, "error");
             }
         }
 
@@ -644,8 +787,8 @@ const loginForm = document.getElementById("loginForm");
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const text = await res.text();
-            if (res.ok) { statusBox.textContent = "🗑 " + text; loadUsers(); }
-            else { statusBox.textContent = "ERROR " + text; }
+            if (res.ok) { setStatus(text, "success"); loadUsers(); }
+            else { setStatus(text, "error"); }
         }
 
         // Logout
@@ -658,7 +801,7 @@ const loginForm = document.getElementById("loginForm");
             userManager.style.display = "none";
             smtpSettings.style.display = "none";
             userList.innerHTML = "";
-            statusBox.textContent = "Logged out.";
+            setStatus("Logged out.");
         });
     
 
@@ -916,12 +1059,15 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadForm.style.display = "block";
         fileTable.style.display = "block";
         userManager.style.display = "block";
+        smtpSettings.style.display = "block";
 
         loadFiles();
         loadUsers();
+        loadSmtpSettings();
         loadQuizCategories();
         loadQuizzes();
         loadImportHistory();
+        setStatus("Session restored. Admin tools are ready.", "success");
     }
 });
 
@@ -970,5 +1116,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <tbody id="historyTbody"></tbody>
     </table>
 </div>
+</main>
 </body>
 </html>

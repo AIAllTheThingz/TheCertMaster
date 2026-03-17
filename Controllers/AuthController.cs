@@ -42,6 +42,7 @@ namespace QuizAPI.Controllers
             public string Password { get; set; } = string.Empty;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -60,6 +61,7 @@ namespace QuizAPI.Controllers
             return Ok($"User {email} created with role User");
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> Login([FromForm] LoginRequest? request)

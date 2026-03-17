@@ -5,12 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Quiz Runner</title>
     <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --accent: #1d4ed8;
+            --accent-hover: #1e40af;
+            --accent-soft: #dbeafe;
+            --border: #d1d5db;
+            --shadow: rgba(15, 23, 42, 0.08);
+            --success-bg: #ecfdf3;
+            --success-text: #166534;
+            --error-bg: #fef2f2;
+            --error-text: #991b1b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
-            background: #0b1020;
-            color: #e8ecff;
+            padding: 20px 16px 48px;
+            background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+            color: var(--text);
         }
 
         .wrap {
@@ -18,17 +39,35 @@
             margin: 0 auto;
         }
 
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
         h1 {
-            margin: 0 0 12px;
-            font-size: 26px;
+            margin: 0 0 0.75rem;
+            font-size: 2rem;
+        }
+
+        .lead {
+            margin: 0 0 1rem;
+            color: var(--muted);
+            line-height: 1.7;
         }
 
         .card {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 14px;
-            padding: 16px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
             margin: 12px 0;
+            box-shadow: 0 18px 40px var(--shadow);
         }
 
         .row {
@@ -40,38 +79,40 @@
 
         label {
             font-size: 14px;
-            opacity: 0.95;
+            color: #334155;
+            font-weight: 600;
         }
 
         input[type="text"], select {
             padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.18);
-            background: rgba(0,0,0,0.25);
-            color: #e8ecff;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text);
             min-width: 260px;
         }
 
         button {
             padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.18);
-            background: rgba(255,255,255,0.10);
-            color: #e8ecff;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #fff;
             cursor: pointer;
+            font-weight: 700;
         }
 
-            button:hover {
-                background: rgba(255,255,255,0.16);
-            }
+        button:hover {
+            background: var(--accent-hover);
+        }
 
-            button:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
         .muted {
-            opacity: 0.75;
+            color: var(--muted);
         }
 
         .qtext {
@@ -98,21 +139,23 @@
             gap: 10px;
             padding: 10px;
             border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.10);
-            background: rgba(0,0,0,0.18);
+            border: 1px solid #dbe4f0;
+            background: #f8fafc;
         }
 
-            .answer input {
-                margin-top: 3px;
-            }
+        .answer input {
+            margin-top: 3px;
+        }
 
         .pill {
             display: inline-block;
             padding: 2px 10px;
             border-radius: 999px;
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.14);
+            background: var(--accent-soft);
+            border: 1px solid #bfdbfe;
+            color: var(--accent);
             font-size: 12px;
+            font-weight: 700;
         }
 
         .imggrid {
@@ -122,45 +165,72 @@
             margin: 12px 0 0;
         }
 
-            .imggrid img {
-                width: 100%;
-                border-radius: 12px;
-                border: 1px solid rgba(255,255,255,0.12);
-                background: rgba(0,0,0,0.25);
-            }
+        .imggrid img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid #dbe4f0;
+            background: #fff;
+        }
 
         .result {
             font-size: 18px;
         }
 
         .ok {
-            color: #7CFFB2;
+            color: var(--success-text);
         }
 
         .bad {
-            color: #FF8AA5;
+            color: var(--error-text);
         }
 
         a {
-            color: #bcd0ff;
+            color: var(--accent);
         }
 
         .toplinks {
             display: flex;
             gap: 14px;
             flex-wrap: wrap;
-            margin-top: 6px;
+            margin: 0 0 1.25rem;
+        }
+
+        #status {
+            margin-top: 10px;
+            padding: 0.9rem 1rem;
+            border-radius: 14px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+            line-height: 1.6;
+        }
+
+        #status.error {
+            background: var(--error-bg);
+            border-color: #fecaca;
+            color: var(--error-text);
+        }
+
+        .divider {
+            border: 0;
+            border-top: 1px solid #e5e7eb;
+            margin: 14px 0;
         }
     </style>
 </head>
 <body>
     <div class="wrap">
+        <div class="eyebrow">DevQuizAPI Quiz Runner</div>
         <h1>Quiz Runner</h1>
-        <!--<div class="toplinks">
-            <a href="/upload.html">Admin upload/tools</a>
-            <span class="muted">|</span>
-            <span class="muted">Tip: open this as <code>/quiz.html?quizId=&lt;GUID&gt;</code></span>
-        </div>-->
+        <p class="lead">
+            Choose a category, load an available quiz, and work through exam-style questions with image support and
+            per-question feedback at the end.
+        </p>
+        <div class="toplinks">
+            <a href="/">Open Landing Page</a>
+            <a href="/upload.html">Open Admin Panel</a>
+            <a href="/swapi.html">Open Swagger API</a>
+        </div>
 
         <div class="card" id="pickerCard">
             <div class="row">
@@ -179,7 +249,7 @@
                     <!--<button id="btnRestart" disabled>Restart (re-randomize)</button>-->
                 </div>
             </div>
-            <div class="muted" id="status" style="margin-top: 10px;"></div>
+            <div id="status" role="status" aria-live="polite"></div>
         </div>
 
         <div class="card" id="quizCard" style="display:none;">
@@ -197,7 +267,7 @@
                 </div>
             </div>
 
-            <hr style="border:0;border-top:1px solid rgba(255,255,255,0.12);margin:14px 0;" />
+            <hr class="divider" />
 
             <div id="questionArea"></div>
         </div>
@@ -281,7 +351,10 @@
         let index = 0;
         const selections = new Map(); // Map<QuestionId, Set<AnswerId>>
 
-        function setStatus(msg) { status.textContent = msg; }
+        function setStatus(msg, tone = "info") {
+            status.className = tone === "error" ? "error" : "";
+            status.textContent = msg;
+        }
 
         function guidFromQuery() {
             const p = new URLSearchParams(window.location.search);
@@ -450,7 +523,7 @@
             } catch (e) {
                 quizCard.style.display = 'none';
                 btnRestart.disabled = true;
-                setStatus('Could not load quiz. Make sure the quizId is valid and the quiz exists.');
+                setStatus('Could not load quiz. Choose a quiz from the list and make sure it still exists.', 'error');
             }
         }
 
@@ -508,7 +581,7 @@
                 btnNewQuiz.disabled = false;
                 setStatus('');
             } catch (e) {
-                setStatus('Submit failed. Check the API and server logs.');
+                setStatus('Submit failed. Check the API response and server logs.', 'error');
             }
         }
 
@@ -526,7 +599,7 @@
         btnLoad.addEventListener('click', () => {
             const id = getSelectedQuizId();
             if (!id) {
-                setStatus('Pick a quiz from the dropdown.');
+                setStatus('Pick a quiz from the dropdown before loading.', 'error');
                 return;
             }
             loadQuiz(id);

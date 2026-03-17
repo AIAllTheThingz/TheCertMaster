@@ -50,7 +50,7 @@ For production:
 
 1. Publish the app
 2. Set production environment variables
-3. Apply the database migration deliberately before or during deployment
+3. Apply the database migration deliberately before switching traffic to the new app build
 
 Recommended manual migration command:
 
@@ -59,6 +59,13 @@ dotnet ef database update
 ```
 
 Run that against the production connection string in a controlled deployment step.
+
+Migration expectations:
+
+- do not depend on startup to mutate the production database
+- run migrations as a deliberate release step
+- confirm the target environment is pointing at the intended database before applying migrations
+- if the release contains schema changes, do not mark the deployment complete until the migration succeeds
 
 ## ASPNETCORE_ENVIRONMENT
 
@@ -88,13 +95,27 @@ These runtime folders should be persisted appropriately on the host and not trea
 - SMTP settings are configured if email features are needed
 - database migration has been applied
 - sample/dev credentials are not relied on in production
+- `ASPNETCORE_ENVIRONMENT` is set to `Production`
+- `/health` is reachable from the deployment target
+- runtime folders for `App_Data` and `wwwroot/uploads/images` are writable
+- the release notes and changelog match the code being deployed
+
+## Release Checklist
+
+- run a release build
+- run the integration tests
+- publish to a clean output folder
+- apply production migration in a controlled step
+- smoke test `/`, `/swapi.html`, and `/health`
+- verify admin login and a sample quiz import
+- publish the matching Git tag and GitHub release notes
 
 ## Post-Deployment Smoke Test
 
 1. Open the landing page
 2. Verify `/health` returns success
-2. Verify `/swapi.html` loads
-3. Test admin login
-4. Test quiz list retrieval
-5. Upload and import a sample quiz package
-6. Open a quiz and confirm images render
+3. Verify `/swapi.html` loads
+4. Test admin login
+5. Test quiz list retrieval
+6. Upload and import a sample quiz package
+7. Open a quiz and confirm images render

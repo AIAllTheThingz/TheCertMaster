@@ -109,13 +109,24 @@ Typical usage:
 4. Import the extracted CSV file shown by the upload result
 5. Open [quiz.html](D:\Quiz_Application\DevQuizAPI\wwwroot\quiz.html) and take the imported quiz
 
+## Import Format
+
+Detailed import guidance lives in [import-format.md](D:\Quiz_Application\DevQuizAPI\docs\import-format.md).
+
+Quick summary:
+
+- CSV/TXT imports use rows with `QuizTitle`, `QuestionText`, `AnswerText`, and `IsCorrect`
+- `Category` is optional
+- `QuestionImgKey` links a question row to an image inside a ZIP package
+- ZIP packages should contain one CSV plus an optional `images/` folder
+
 ## Browser Entry Points
 
 - [index.html](D:\Quiz_Application\DevQuizAPI\wwwroot\index.html): simple auth/login test page
 - [upload.html](D:\Quiz_Application\DevQuizAPI\wwwroot\upload.html): admin dashboard for login, file upload, imports, user management, SMTP settings
 - [quiz.html](D:\Quiz_Application\DevQuizAPI\wwwroot\quiz.html): quiz runner UI
 
-In development, Swagger is also available at the app root.
+In development, Swagger is available at [swapi.html](D:\Quiz_Application\DevQuizAPI\wwwroot\swapi.html).
 
 ## Main API Areas
 
@@ -178,6 +189,7 @@ dotnet build
 - [CHANGELOG.md](D:\Quiz_Application\DevQuizAPI\CHANGELOG.md): release history
 - [v0.1.0-alpha release notes](D:\Quiz_Application\DevQuizAPI\docs\releases\v0.1.0-alpha.md)
 - [release plan](D:\Quiz_Application\DevQuizAPI\docs\release-plan.md): criteria for `v0.2.0-beta`
+- [release checklist](D:\Quiz_Application\DevQuizAPI\docs\release-checklist.md): pre-push and release verification steps
 - [DEPLOYMENT.md](D:\Quiz_Application\DevQuizAPI\DEPLOYMENT.md): production deployment guide
 
 ## Health Check
