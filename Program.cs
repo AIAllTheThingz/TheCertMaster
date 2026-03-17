@@ -20,15 +20,25 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 var jwtKey = builder.Configuration["Jwt:Key"];
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrWhiteSpace(jwtIssuer))
-    throw new InvalidOperationException("Jwt:Issuer is required.");
+    throw new InvalidOperationException("Jwt:Issuer is required. Set it in configuration or with the Jwt__Issuer environment variable.");
 
 if (string.IsNullOrWhiteSpace(jwtAudience))
-    throw new InvalidOperationException("Jwt:Audience is required.");
+    throw new InvalidOperationException("Jwt:Audience is required. Set it in configuration or with the Jwt__Audience environment variable.");
 
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
-    throw new InvalidOperationException("Jwt:Key is required and must be at least 32 characters long.");
+    throw new InvalidOperationException("Jwt:Key is required and must be at least 32 characters long. Set it in configuration or with the Jwt__Key environment variable.");
+
+if (string.IsNullOrWhiteSpace(defaultConnection))
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required. Set it in configuration or with the ConnectionStrings__DefaultConnection environment variable.");
+
+if (!builder.Environment.IsDevelopment() &&
+    string.Equals(defaultConnection, "SET-IN-ENVIRONMENT", StringComparison.Ordinal))
+{
+    throw new InvalidOperationException("Production requires a real ConnectionStrings:DefaultConnection value. Replace the placeholder with an environment-specific secret.");
+}
 
 var jwtSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
@@ -185,7 +195,7 @@ builder.Services.AddAuthentication(options =>
 
 // Call to appsettings.json for SQL Express connection string
 builder.Services.AddDbContext<QuizDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection));
 
 // App services
 builder.Services.AddScoped<QuizQueryService>();
@@ -282,3 +292,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+public partial class Program { }

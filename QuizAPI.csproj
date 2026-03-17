@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="QuizAPI_Source_Code\**\*.cs" />
+    <Compile Remove="QuizAPI.Tests\**\*.cs" />
     <Content Remove="QuizAPI_Source_Code\**" />
+    <Content Remove="QuizAPI.Tests\**" />
     <EmbeddedResource Remove="QuizAPI_Source_Code\**" />
+    <EmbeddedResource Remove="QuizAPI.Tests\**" />
     <None Remove="QuizAPI_Source_Code\**" />
+    <None Remove="QuizAPI.Tests\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -153,6 +153,20 @@ For production-like deployments, prefer environment variables or secret storage 
 - SMTP credentials
 - connection strings
 
+The checked-in [appsettings.json](D:\Quiz_Application\DevQuizAPI\appsettings.json) intentionally does not contain a usable production database connection string or JWT signing key.
+
+Recommended production environment variables:
+
+```text
+ConnectionStrings__DefaultConnection=Server=YOURSERVER;Database=YOURDB;User Id=YOURUSER;Password=YOURPASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=True;
+Jwt__Key=YOUR-LONG-RANDOM-SECRET-AT-LEAST-32-CHARS
+Jwt__Issuer=QuizAPI
+Jwt__Audience=QuizAPIUsers
+Cors__AllowedOrigins__0=https://your-production-site.example
+```
+
+Startup will now fail fast if required production configuration is missing.
+
 ## Build
 
 ```powershell

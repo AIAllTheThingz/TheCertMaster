@@ -94,9 +94,13 @@
 
     <form id="uploadForm" enctype="multipart/form-data" style="display:none;">
         <h3>Upload Quiz File (.csv / .txt / .zip)</h3>
+        <div class="muted">
+            Upload a `.csv` or `.txt` file for direct import, or a `.zip` package that contains one CSV plus question images.
+        </div>
         <input type="file" id="fileInput" name="File" accept=".csv,.txt,.zip" required />
         <button type="submit">Upload</button>
         <button type="button" id="logoutBtn" class="danger">Logout</button>
+        <div id="uploadAssist" class="muted" style="margin-top:10px; display:none;"></div>
     </form>
 
     <div id="fileTable" style="display:none;">
@@ -202,8 +206,10 @@ const loginForm = document.getElementById("loginForm");
         const smtpStatus = document.getElementById("smtpStatus");
         const smtpForm = document.getElementById("smtpForm");
         const userList = document.getElementById("userList");
+        const uploadAssist = document.getElementById("uploadAssist");
 
         let token = localStorage.getItem("jwtToken");
+        let pendingImportedCsvName = null;
 
         function escapeHtml(str) {
             return String(str ?? "")
@@ -217,6 +223,43 @@ const loginForm = document.getElementById("loginForm");
         function escapeHtmlAttr(str) {
             // Same as escapeHtml, but ensure it's safe inside attributes
             return escapeHtml(str).replace(/`/g, "&#96;");
+        }
+
+        async function readErrorResponse(res) {
+            const text = await res.text();
+            if (!text) return `Request failed with status ${res.status}.`;
+
+            try {
+                const parsed = JSON.parse(text);
+                return parsed.detail || parsed.title || parsed.message || text;
+            } catch {
+                return text;
+            }
+        }
+
+        function showUploadAssist(message, fileName) {
+            pendingImportedCsvName = fileName || null;
+            if (!uploadAssist) return;
+
+            if (!message) {
+                uploadAssist.style.display = "none";
+                uploadAssist.innerHTML = "";
+                return;
+            }
+
+            const importButton = fileName
+                ? ` <button type="button" id="importExtractedBtn">Import extracted CSV now</button>`
+                : "";
+
+            uploadAssist.style.display = "block";
+            uploadAssist.innerHTML = `${escapeHtml(message)}${importButton}`;
+
+            const importBtn = document.getElementById("importExtractedBtn");
+            if (importBtn && fileName) {
+                importBtn.addEventListener("click", async () => {
+                    await processFile(fileName);
+                });
+            }
         }
 
 
@@ -302,17 +345,21 @@ const loginForm = document.getElementById("loginForm");
                             `ZIP: ${data.ZipFileName}\n` +
                             `CSV Ready To Import: ${data.CsvFileName}\n` +
                             `Images Saved: ${data.ImagesSaved}`;
+                        showUploadAssist(`Package processed. Extracted CSV: ${data.CsvFileName}`, data.CsvFileName);
                     } else {
                         const text = await res.text();
                         statusBox.textContent = "OK Upload successful:\n" + text;
+                        showUploadAssist("");
                     }
                     loadFiles();
                 } else {
-                    const text = await res.text();
-                    statusBox.textContent = "ERROR Upload failed (" + res.status + "): " + text;
+                    const message = await readErrorResponse(res);
+                    statusBox.textContent = "ERROR Upload failed (" + res.status + "): " + message;
+                    showUploadAssist("");
                 }
             } catch (err) {
                 statusBox.textContent = "Error: " + err.message;
+                showUploadAssist("");
             }
         });
 
@@ -335,7 +382,7 @@ const loginForm = document.getElementById("loginForm");
                     const actionHtml = canImport
                         ? `<button onclick="processFile('${escapeHtmlAttr(fileName)}')">Import</button>
                            <button class="danger" onclick="deleteFile('${escapeHtmlAttr(fileName)}')">Delete</button>`
-                        : `<span class="muted">Package upload</span>
+                        : `<span class="muted">ZIP package: upload only</span>
                            <button class="danger" onclick="deleteFile('${escapeHtmlAttr(fileName)}')">Delete</button>`;
 
                     const row = document.createElement("tr");
@@ -357,17 +404,25 @@ const loginForm = document.getElementById("loginForm");
 
         // Import to DB
         async function processFile(name) {
+            const lowerName = (name || "").toLowerCase();
+            if (!(lowerName.endsWith(".csv") || lowerName.endsWith(".txt"))) {
+                statusBox.textContent = `ERROR Only extracted CSV/TXT files can be imported. Upload ZIP packages first, then import the extracted CSV.`;
+                return;
+            }
+
             if (!confirm(`Import ${name} into database?`)) return;
             statusBox.textContent = `Importing ${name}...`;
             const res = await fetch(`/api/import/process/${encodeURIComponent(name)}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            const text = await res.text();
             if (res.ok) {
+                const text = await res.text();
                 statusBox.textContent = "OK Imported successfully:\n" + text;
+                showUploadAssist("");
             } else {
-                statusBox.textContent = "ERROR Import failed (" + res.status + "): " + text;
+                const message = await readErrorResponse(res);
+                statusBox.textContent = "ERROR Import failed (" + res.status + "): " + message;
             }
         }
 
