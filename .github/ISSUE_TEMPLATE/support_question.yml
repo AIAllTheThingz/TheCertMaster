@@ -1,0 +1,67 @@
+name: Support question
+description: Ask a setup, usage, import, or troubleshooting question.
+title: "[Question]: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for setup help, usage questions, or troubleshooting.
+        If you have found a reproducible product bug, please use the bug report template instead.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to do, and where are you getting stuck?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - First-time setup
+        - Development database
+        - Authentication
+        - Swagger
+        - Quiz import
+        - ZIP/images
+        - Quiz runner
+        - SMTP/email
+        - Deployment
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you already tried
+      description: Share any steps, docs, or commands you already used.
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Share anything relevant about your environment.
+      placeholder: |
+        OS:
+        Browser:
+        .NET SDK:
+        SQL Server version:
+    validations:
+      required: false
+
+  - type: textarea
+    id: errors
+    attributes:
+      label: Error messages or logs
+      description: Paste any relevant output if available.
+      render: text
+    validations:
+      required: false

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: DevQuizAPI README
+    url: https://github.com/mezuccolini/QuizAPI/blob/main/README.md
+    about: Start here for setup, local development, import flow, and project overview.
+  - name: Import format guide
+    url: https://github.com/mezuccolini/QuizAPI/blob/main/docs/import-format.md
+    about: Review the supported CSV and ZIP package structure before reporting import issues.
+  - name: FAQ and troubleshooting
+    url: https://github.com/mezuccolini/QuizAPI/blob/main/docs/FAQ.md
+    about: Check common setup, auth, import, and deployment questions before opening a support issue.

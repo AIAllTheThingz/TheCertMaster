@@ -1,0 +1,60 @@
+name: Feature request
+description: Suggest an improvement or new capability for DevQuizAPI.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Please explain the problem you want to solve and the outcome you want to see.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or need
+      description: What gap, pain point, or limitation are you running into?
+      placeholder: I'm trying to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any workaround or alternative you considered.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Authentication
+        - Quiz runner
+        - Quiz import
+        - Admin dashboard
+        - SMTP/email
+        - Documentation
+        - Deployment
+        - CI/tests
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add mockups, examples, or usage context if helpful.
+    validations:
+      required: false
