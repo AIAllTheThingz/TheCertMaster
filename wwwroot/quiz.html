@@ -174,11 +174,6 @@
                     <select id="quizSelect"></select>
                 </div>
 
-                <div>
-                    <label for="quizIdInput">…or paste quizId</label><br />
-                    <input id="quizIdInput" type="text" placeholder="00000000-0000-0000-0000-000000000000" />
-                </div>
-
                 <div style="margin-top: 18px;">
                     <button id="btnLoad">Load quiz</button>
                     <!--<button id="btnRestart" disabled>Restart (re-randomize)</button>-->
@@ -264,7 +259,6 @@
         const el = (id) => document.getElementById(id);
         const categorySelect = el('categorySelect');
         const quizSelect = el('quizSelect');
-        const quizIdInput = el('quizIdInput');
         const pickerCard = el('pickerCard');
         const status = el('status');
         const quizCard = el('quizCard');
@@ -361,8 +355,6 @@
         }
 
         function getSelectedQuizId() {
-            const pasted = (quizIdInput.value || '').trim();
-            if (pasted) return pasted;
             return quizSelect.value;
         }
 
@@ -533,7 +525,7 @@
         btnLoad.addEventListener('click', () => {
             const id = getSelectedQuizId();
             if (!id) {
-                setStatus('Pick a quiz from the dropdown, or paste a quizId.');
+                setStatus('Pick a quiz from the dropdown.');
                 return;
             }
             loadQuiz(id);
@@ -580,7 +572,6 @@
         btnSubmit.addEventListener('click', submitQuiz);
 
         categorySelect.addEventListener('change', () => {
-            quizIdInput.value = '';
             refreshQuizListForCategory();
         });
 
@@ -601,7 +592,7 @@
 
             const qid = guidFromQuery();
             if (qid) {
-                quizIdInput.value = qid;
+                quizSelect.value = qid;
                 loadQuiz(qid);
             }
         })();

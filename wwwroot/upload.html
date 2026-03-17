@@ -93,8 +93,8 @@
     </form>
 
     <form id="uploadForm" enctype="multipart/form-data" style="display:none;">
-        <h3>Upload Quiz File (.csv / .txt)</h3>
-        <input type="file" id="fileInput" name="File" accept=".csv,.txt" required />
+        <h3>Upload Quiz File (.csv / .txt / .zip)</h3>
+        <input type="file" id="fileInput" name="File" accept=".csv,.txt,.zip" required />
         <button type="submit">Upload</button>
         <button type="button" id="logoutBtn" class="danger">Logout</button>
     </form>
@@ -284,19 +284,31 @@ const loginForm = document.getElementById("loginForm");
 
             const formData = new FormData();
             formData.append("File", file);
+            const isZip = file.name.toLowerCase().endsWith(".zip");
+            const uploadUrl = isZip ? "/api/import/upload-package" : "/api/import/upload";
 
             try {
-                const res = await fetch("/api/import/upload", {
+                const res = await fetch(uploadUrl, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` },
                     body: formData
                 });
 
-                const text = await res.text();
                 if (res.ok) {
-                    statusBox.textContent = "OK Upload successful:\n" + text;
+                    if (isZip) {
+                        const data = await res.json();
+                        statusBox.textContent =
+                            "OK Package upload successful:\n" +
+                            `ZIP: ${data.ZipFileName}\n` +
+                            `CSV Ready To Import: ${data.CsvFileName}\n` +
+                            `Images Saved: ${data.ImagesSaved}`;
+                    } else {
+                        const text = await res.text();
+                        statusBox.textContent = "OK Upload successful:\n" + text;
+                    }
                     loadFiles();
                 } else {
+                    const text = await res.text();
                     statusBox.textContent = "ERROR Upload failed (" + res.status + "): " + text;
                 }
             } catch (err) {
@@ -317,14 +329,22 @@ const loginForm = document.getElementById("loginForm");
                     return;
                 }
                 for (const f of files) {
+                    const fileName = f.FileName || "";
+                    const lowerName = fileName.toLowerCase();
+                    const canImport = lowerName.endsWith(".csv") || lowerName.endsWith(".txt");
+                    const actionHtml = canImport
+                        ? `<button onclick="processFile('${escapeHtmlAttr(fileName)}')">Import</button>
+                           <button class="danger" onclick="deleteFile('${escapeHtmlAttr(fileName)}')">Delete</button>`
+                        : `<span class="muted">Package upload</span>
+                           <button class="danger" onclick="deleteFile('${escapeHtmlAttr(fileName)}')">Delete</button>`;
+
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                <td>${f.FileName}</td>
+                <td>${escapeHtml(fileName)}</td>
                 <td>${f.SizeKb}</td>
                 <td>${new Date(f.UploadedUtc).toLocaleString()}</td>
                 <td>
-                  <button onclick="processFile('${f.FileName}')">Import</button>
-                  <button class="danger" onclick="deleteFile('${f.FileName}')">Delete</button>
+                  ${actionHtml}
                 </td>
               `;
                     fileList.appendChild(row);
