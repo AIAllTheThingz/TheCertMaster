@@ -190,6 +190,7 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
 // App services
 builder.Services.AddScoped<QuizQueryService>();
 builder.Services.AddScoped<QuizImportService>();
+builder.Services.AddScoped<SampleDataSeeder>();
 
 // SMTP settings + email service (supports authenticated and unauthenticated relay)
 builder.Services.AddScoped<ISmtpSettingsStore, FileSmtpSettingsStore>();
@@ -225,12 +226,14 @@ using (var scope = app.Services.CreateScope())
 {
     var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     var db = scope.ServiceProvider.GetRequiredService<QuizDbContext>();
+    var sampleDataSeeder = scope.ServiceProvider.GetRequiredService<SampleDataSeeder>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
     if (app.Environment.IsDevelopment())
     {
         await db.Database.MigrateAsync();
+        await sampleDataSeeder.SeedAsync();
     }
 
     if (!await roleManager.RoleExistsAsync("Admin"))
