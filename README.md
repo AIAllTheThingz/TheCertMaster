@@ -89,6 +89,26 @@ Sample data behavior:
 - defaults to `true` in development
 - only seeds when there are no quizzes in the database
 
+## Sample Import Package
+
+A public sample quiz package is included in [samples](D:\Quiz_Application\DevQuizAPI\samples):
+
+- [sample-quiz-package-1V0-21.20.zip](D:\Quiz_Application\DevQuizAPI\samples\sample-quiz-package-1V0-21.20.zip)
+
+This package is intended as a demo/template import example and includes:
+
+- one CSV quiz file
+- question-linked image assets
+- a structure compatible with the ZIP package upload flow in the admin panel
+
+Typical usage:
+
+1. Open [upload.html](D:\Quiz_Application\DevQuizAPI\wwwroot\upload.html)
+2. Log in as an admin
+3. Upload the ZIP package
+4. Import the extracted CSV file shown by the upload result
+5. Open [quiz.html](D:\Quiz_Application\DevQuizAPI\wwwroot\quiz.html) and take the imported quiz
+
 ## Browser Entry Points
 
 - [index.html](D:\Quiz_Application\DevQuizAPI\wwwroot\index.html): simple auth/login test page
