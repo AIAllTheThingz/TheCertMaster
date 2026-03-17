@@ -54,7 +54,7 @@ By default, development uses:
 
 ### First Run
 
-From [D:\Quiz_Application\DevQuizAPI](D:\Quiz_Application\DevQuizAPI):
+From your local project directory or Git-cloned repository folder:
 
 ```powershell
 dotnet build
