@@ -13,6 +13,7 @@ namespace QuizAPI.Data
         public DbSet<Question> Questions => Set<Question>();
         public DbSet<Answer> Answers => Set<Answer>();
         public DbSet<Image> Images => Set<Image>();
+        public DbSet<UserQuizAttempt> UserQuizAttempts => Set<UserQuizAttempt>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -35,6 +36,9 @@ namespace QuizAPI.Data
                 .WithOne()
                 .HasForeignKey(i => i.QuestionId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserQuizAttempt>()
+                .HasIndex(a => new { a.UserId, a.SubmittedUtc });
         }
     }
 }

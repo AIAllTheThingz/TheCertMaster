@@ -173,4 +173,102 @@ public class FlowTests
         Assert.NotNull(user);
         Assert.True(user!.EmailConfirmed);
     }
+
+    [Fact]
+    public async Task AuthenticatedQuizSubmission_IsRecordedInAccountHistory()
+    {
+        _factory.EmailService.Clear();
+        var client = _factory.CreateClient();
+
+        var email = "historyuser@example.com";
+        var password = "Password!123";
+
+        var registerPayload = JsonSerializer.Serialize(new
+        {
+            email,
+            password,
+            confirmPassword = password
+        });
+
+        using var registerResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(registerPayload, Encoding.UTF8, "application/json"));
+        registerResponse.EnsureSuccessStatusCode();
+
+        var verificationLink = _factory.EmailService.Messages[0].BodyText
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .First(line => line.StartsWith("http", StringComparison.OrdinalIgnoreCase));
+
+        using var verificationResponse = await client.GetAsync(new Uri(verificationLink).PathAndQuery
+            .Replace("/verify-email.html", "/api/auth/confirm-email", StringComparison.OrdinalIgnoreCase));
+        verificationResponse.EnsureSuccessStatusCode();
+
+        using var loginContent = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["email"] = email,
+            ["password"] = password
+        });
+
+        using var loginResponse = await client.PostAsync("/api/auth/login", loginContent);
+        loginResponse.EnsureSuccessStatusCode();
+
+        var loginPayload = await loginResponse.Content.ReadAsStringAsync();
+        using var loginDoc = JsonDocument.Parse(loginPayload);
+        var token = loginDoc.RootElement.GetProperty("token").GetString();
+        Assert.False(string.IsNullOrWhiteSpace(token));
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var quizListResponse = await client.GetAsync("/api/quiz");
+        quizListResponse.EnsureSuccessStatusCode();
+        var quizListPayload = await quizListResponse.Content.ReadAsStringAsync();
+        using var quizListDoc = JsonDocument.Parse(quizListPayload);
+        var quizId = quizListDoc.RootElement.EnumerateArray()
+            .First(e => string.Equals(e.GetProperty("Title").GetString(), "Seed Quiz", StringComparison.Ordinal))
+            .GetProperty("Id")
+            .GetGuid();
+
+        using var randomizedResponse = await client.GetAsync($"/api/quiz/{quizId}/random");
+        randomizedResponse.EnsureSuccessStatusCode();
+        var randomizedPayload = await randomizedResponse.Content.ReadAsStringAsync();
+        using var randomizedDoc = JsonDocument.Parse(randomizedPayload);
+
+        var question = randomizedDoc.RootElement.GetProperty("Questions")[0];
+        var questionId = question.GetProperty("QuestionId").GetGuid();
+        var correctAnswerId = question.GetProperty("Answers").EnumerateArray()
+            .First(a => string.Equals(a.GetProperty("Text").GetString(), "HTTPS", StringComparison.Ordinal))
+            .GetProperty("AnswerId")
+            .GetGuid();
+
+        var submitPayload = JsonSerializer.Serialize(new
+        {
+            Answers = new[]
+            {
+                new
+                {
+                    QuestionId = questionId,
+                    SelectedAnswerIds = new[] { correctAnswerId }
+                }
+            }
+        });
+
+        using var submitResponse = await client.PostAsync(
+            $"/api/quiz/{quizId}/submit",
+            new StringContent(submitPayload, Encoding.UTF8, "application/json"));
+        submitResponse.EnsureSuccessStatusCode();
+
+        var submitBody = await submitResponse.Content.ReadAsStringAsync();
+        Assert.Contains("\"Passed\":true", submitBody, StringComparison.OrdinalIgnoreCase);
+
+        using var profileResponse = await client.GetAsync("/api/account/me");
+        profileResponse.EnsureSuccessStatusCode();
+        var profilePayload = await profileResponse.Content.ReadAsStringAsync();
+        Assert.Contains("\"TotalAttempts\":1", profilePayload, StringComparison.OrdinalIgnoreCase);
+
+        using var attemptsResponse = await client.GetAsync("/api/account/attempts");
+        attemptsResponse.EnsureSuccessStatusCode();
+        var attemptsPayload = await attemptsResponse.Content.ReadAsStringAsync();
+        Assert.Contains("Seed Quiz", attemptsPayload);
+        Assert.Contains("\"Passed\":true", attemptsPayload, StringComparison.OrdinalIgnoreCase);
+    }
 }

@@ -17,6 +17,7 @@ namespace QuizAPI.DTO
         public int TotalQuestions { get; set; }
         public int CorrectCount { get; set; }
         public double ScorePercent { get; set; }
+        public bool Passed { get; set; }
         public List<QuestionResultDto> Questions { get; set; } = new();
     }
 

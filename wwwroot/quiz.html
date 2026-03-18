@@ -420,12 +420,21 @@
             submit: (quizId, payload) =>
                 fetch(`/api/quiz/${quizId}/submit`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: buildJsonHeaders(),
                     body: JSON.stringify(payload)
                 })
                     .then(r => r.ok ? r.json() : Promise.reject(r))
                     .then(normalizeKeys)
         };
+
+        function buildJsonHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            const token = localStorage.getItem('jwtToken');
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+            return headers;
+        }
 
         const el = (id) => document.getElementById(id);
         const categorySelect = el('categorySelect');

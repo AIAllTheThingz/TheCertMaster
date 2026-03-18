@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Cert Master Account</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5efe3;
+            --panel: rgba(255, 252, 247, 0.92);
+            --text: #182230;
+            --muted: #5f6c7d;
+            --accent: #0f3d57;
+            --accent-hover: #0b2d40;
+            --accent-soft: #dcebf3;
+            --highlight: #c57f17;
+            --border: rgba(24, 34, 48, 0.12);
+            --shadow: rgba(24, 34, 48, 0.12);
+            --success-bg: #ecfdf3;
+            --success-text: #166534;
+            --error-bg: #fef2f2;
+            --error-text: #991b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(197, 127, 23, 0.15), transparent 28%),
+                radial-gradient(circle at top right, rgba(15, 61, 87, 0.18), transparent 22%),
+                linear-gradient(180deg, #fdf7ea 0%, var(--bg) 52%, #f1eadc 100%);
+            color: var(--text);
+            padding: 1.2rem;
+        }
+
+        main {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+            padding: 1.6rem 0 3rem;
+        }
+
+        .shell {
+            display: grid;
+            gap: 1.2rem;
+        }
+
+        .hero,
+        .panel,
+        .attempt-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 26px;
+            box-shadow: 0 26px 54px var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero,
+        .panel {
+            padding: 1.4rem;
+        }
+
+        .hero-grid,
+        .account-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.9fr);
+            gap: 1.2rem;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 0.9rem;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h1, h2, h3 {
+            margin: 0 0 0.75rem;
+            font-family: Georgia, "Times New Roman", serif;
+        }
+
+        .lead, p, li, td, th {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .actions,
+        .quick-links,
+        .stat-grid {
+            display: flex;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .button,
+        .button-secondary,
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.9rem 1.15rem;
+            border-radius: 14px;
+            text-decoration: none;
+            border: 1px solid var(--accent);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .button,
+        button {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .button:hover,
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .button-secondary:hover {
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        label {
+            display: block;
+            margin-top: 0.8rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        input {
+            width: 100%;
+            margin-top: 0.4rem;
+            padding: 0.85rem 0.95rem;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 0.95rem 1rem;
+            border-radius: 16px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .status.success {
+            background: var(--success-bg);
+            border-color: #bbf7d0;
+            color: var(--success-text);
+        }
+
+        .status.error {
+            background: var(--error-bg);
+            border-color: #fecaca;
+            color: var(--error-text);
+        }
+
+        .stat-grid {
+            margin-top: 1rem;
+        }
+
+        .stat {
+            min-width: 150px;
+            padding: 1rem;
+            border-radius: 18px;
+            border: 1px solid rgba(24, 34, 48, 0.08);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 251, 244, 0.95));
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 1.55rem;
+            color: var(--accent);
+        }
+
+        .attempt-list {
+            display: grid;
+            gap: 0.9rem;
+        }
+
+        .attempt-card {
+            padding: 1.1rem 1.15rem;
+        }
+
+        .attempt-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .badge.pass {
+            background: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge.fail {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid #fecaca;
+        }
+
+        .meta {
+            display: flex;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+            margin-top: 0.65rem;
+            color: #475569;
+            font-size: 0.95rem;
+        }
+
+        .empty {
+            padding: 1.1rem;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px dashed rgba(24, 34, 48, 0.18);
+            color: var(--muted);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 880px) {
+            .hero-grid,
+            .account-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="shell">
+            <section class="hero">
+                <div class="hero-grid">
+                    <div>
+                        <div class="eyebrow">The Cert Master</div>
+                        <h1>My account</h1>
+                        <p class="lead">
+                            Sign in to manage your account and review your current pass or fail history across completed quiz attempts.
+                        </p>
+                        <div class="quick-links">
+                            <a class="button-secondary" href="/">Back to home</a>
+                            <a class="button-secondary" href="/quiz.html">Open quiz selection</a>
+                            <a class="button-secondary" href="/register.html">Create account</a>
+                        </div>
+                    </div>
+                    <div class="panel" style="padding: 1.1rem;">
+                        <h2>How history works</h2>
+                        <p>Signed-in quiz attempts are stored on your account. A score of 70% or higher is shown as a pass.</p>
+                        <p>Anonymous quiz sessions still work, but they are not added to your personal history.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="loginPanel" class="panel">
+                <h2>Sign in</h2>
+                <p class="lead">Use your verified email account to load your current results and manage your password.</p>
+                <form id="loginForm">
+                    <label for="loginEmail">Email address</label>
+                    <input type="email" id="loginEmail" autocomplete="email" required />
+
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" autocomplete="current-password" required />
+
+                    <div class="actions" style="margin-top: 1rem;">
+                        <button type="submit">Sign in</button>
+                    </div>
+                </form>
+                <div id="loginStatus" class="status hidden" role="status" aria-live="polite"></div>
+            </section>
+
+            <section id="accountPanel" class="hidden">
+                <div class="account-grid">
+                    <section class="panel">
+                        <h2>Account overview</h2>
+                        <p class="lead" id="accountLead">Loading your account...</p>
+                        <div class="stat-grid">
+                            <div class="stat">
+                                <span>Total attempts</span>
+                                <strong id="statTotal">0</strong>
+                            </div>
+                            <div class="stat">
+                                <span>Passed</span>
+                                <strong id="statPassed">0</strong>
+                            </div>
+                            <div class="stat">
+                                <span>Failed</span>
+                                <strong id="statFailed">0</strong>
+                            </div>
+                        </div>
+                        <div class="actions" style="margin-top: 1rem;">
+                            <button type="button" id="btnRefresh">Refresh history</button>
+                            <button type="button" id="btnSignOut" class="button-secondary">Sign out</button>
+                        </div>
+                        <div id="accountStatus" class="status hidden" role="status" aria-live="polite"></div>
+                    </section>
+
+                    <section class="panel">
+                        <h2>Change password</h2>
+                        <form id="passwordForm">
+                            <label for="currentPassword">Current password</label>
+                            <input type="password" id="currentPassword" autocomplete="current-password" required />
+
+                            <label for="newPassword">New password</label>
+                            <input type="password" id="newPassword" autocomplete="new-password" required />
+
+                            <label for="confirmNewPassword">Confirm new password</label>
+                            <input type="password" id="confirmNewPassword" autocomplete="new-password" required />
+
+                            <div class="actions" style="margin-top: 1rem;">
+                                <button type="submit">Update password</button>
+                            </div>
+                        </form>
+                        <div id="passwordStatus" class="status hidden" role="status" aria-live="polite"></div>
+                    </section>
+                </div>
+
+                <section class="panel" style="margin-top: 1.2rem;">
+                    <h2>Current pass / fail list of tests</h2>
+                    <div id="attemptList" class="attempt-list"></div>
+                </section>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const tokenKey = "jwtToken";
+        const loginPanel = document.getElementById("loginPanel");
+        const accountPanel = document.getElementById("accountPanel");
+        const loginForm = document.getElementById("loginForm");
+        const passwordForm = document.getElementById("passwordForm");
+        const accountLead = document.getElementById("accountLead");
+        const attemptList = document.getElementById("attemptList");
+        const statTotal = document.getElementById("statTotal");
+        const statPassed = document.getElementById("statPassed");
+        const statFailed = document.getElementById("statFailed");
+        const btnRefresh = document.getElementById("btnRefresh");
+        const btnSignOut = document.getElementById("btnSignOut");
+
+        function getToken() {
+            return localStorage.getItem(tokenKey);
+        }
+
+        function toCamelKey(key) {
+            if (!key || typeof key !== "string") return key;
+            return key.length === 1 ? key.toLowerCase() : (key[0].toLowerCase() + key.slice(1));
+        }
+
+        function normalizeKeys(value) {
+            if (Array.isArray(value)) {
+                return value.map(normalizeKeys);
+            }
+
+            if (value && typeof value === "object") {
+                const normalized = {};
+                for (const [key, nestedValue] of Object.entries(value)) {
+                    normalized[toCamelKey(key)] = normalizeKeys(nestedValue);
+                }
+                return normalized;
+            }
+
+            return value;
+        }
+
+        function setToken(token) {
+            if (token) {
+                localStorage.setItem(tokenKey, token);
+            } else {
+                localStorage.removeItem(tokenKey);
+            }
+        }
+
+        function setStatus(elementId, message, tone = "info") {
+            const box = document.getElementById(elementId);
+            if (!box) return;
+            box.className = `status${tone === "info" ? "" : " " + tone}`;
+            box.textContent = message;
+            box.classList.remove("hidden");
+        }
+
+        function clearStatus(elementId) {
+            const box = document.getElementById(elementId);
+            if (!box) return;
+            box.textContent = "";
+            box.className = "status hidden";
+        }
+
+        async function fetchJson(url, options = {}) {
+            const token = getToken();
+            const headers = new Headers(options.headers || {});
+            if (token) {
+                headers.set("Authorization", `Bearer ${token}`);
+            }
+
+            const response = await fetch(url, { ...options, headers });
+            const text = await response.text();
+
+            if (!response.ok) {
+                throw new Error(text || `Request failed with status ${response.status}.`);
+            }
+
+            return text ? normalizeKeys(JSON.parse(text)) : {};
+        }
+
+        function renderAttempts(attempts) {
+            if (!attempts || attempts.length === 0) {
+                attemptList.innerHTML = '<div class="empty">No quiz attempts have been recorded on this account yet. Sign in before you submit a quiz if you want it to appear here.</div>';
+                return;
+            }
+
+            attemptList.innerHTML = attempts.map((attempt) => {
+                const badgeClass = attempt.passed ? "pass" : "fail";
+                const badgeText = attempt.passed ? "Pass" : "Fail";
+                const dateText = new Date(attempt.submittedUtc).toLocaleString();
+
+                return `
+                    <article class="attempt-card">
+                        <div class="attempt-head">
+                            <div>
+                                <h3>${attempt.quizTitle}</h3>
+                                <div class="meta">
+                                    <span>Category: ${attempt.quizCategory}</span>
+                                    <span>${attempt.correctCount} / ${attempt.totalQuestions} correct</span>
+                                    <span>Score: ${attempt.scorePercent}%</span>
+                                    <span>${dateText}</span>
+                                </div>
+                            </div>
+                            <span class="badge ${badgeClass}">${badgeText}</span>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+        }
+
+        async function loadAccount() {
+            try {
+                clearStatus("accountStatus");
+                const [profile, attempts] = await Promise.all([
+                    fetchJson("/api/account/me"),
+                    fetchJson("/api/account/attempts")
+                ]);
+
+                accountLead.textContent = `${profile.email} · ${profile.role}${profile.emailConfirmed ? " · verified" : " · not yet verified"}`;
+                statTotal.textContent = profile.totalAttempts;
+                statPassed.textContent = profile.passedAttempts;
+                statFailed.textContent = profile.failedAttempts;
+                renderAttempts(attempts);
+
+                loginPanel.classList.add("hidden");
+                accountPanel.classList.remove("hidden");
+            } catch (error) {
+                setToken(null);
+                accountPanel.classList.add("hidden");
+                loginPanel.classList.remove("hidden");
+                setStatus("loginStatus", "Please sign in to load your account history.", "error");
+            }
+        }
+
+        loginForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            clearStatus("loginStatus");
+
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
+
+            try {
+                const response = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ Email: email, Password: password })
+                });
+
+                const text = await response.text();
+                if (!response.ok) {
+                    throw new Error(text || "Sign-in failed.");
+                }
+
+                const payload = text ? JSON.parse(text) : {};
+                if (!payload.token) {
+                    throw new Error("Sign-in succeeded but no token was returned.");
+                }
+
+                setToken(payload.token);
+                loginForm.reset();
+                setStatus("loginStatus", "Signed in successfully.", "success");
+                await loadAccount();
+            } catch (error) {
+                setStatus("loginStatus", error.message || "Sign-in failed.", "error");
+            }
+        });
+
+        passwordForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            clearStatus("passwordStatus");
+
+            const currentPassword = document.getElementById("currentPassword").value;
+            const newPassword = document.getElementById("newPassword").value;
+            const confirmPassword = document.getElementById("confirmNewPassword").value;
+
+            try {
+                const result = await fetchJson("/api/account/change-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+                });
+
+                passwordForm.reset();
+                setStatus("passwordStatus", result.message || "Password updated successfully.", "success");
+            } catch (error) {
+                setStatus("passwordStatus", error.message || "Password update failed.", "error");
+            }
+        });
+
+        btnRefresh.addEventListener("click", async () => {
+            setStatus("accountStatus", "Refreshing account history...");
+            await loadAccount();
+            clearStatus("accountStatus");
+        });
+
+        btnSignOut.addEventListener("click", () => {
+            setToken(null);
+            accountPanel.classList.add("hidden");
+            loginPanel.classList.remove("hidden");
+            setStatus("loginStatus", "Signed out.", "success");
+        });
+
+        loadAccount();
+    </script>
+</body>
+</html>

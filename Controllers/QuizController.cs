@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizAPI.Data;
 using QuizAPI.DTO;
+using QuizAPI.Models;
 using QuizAPI.Services;
-using System.Globalization;
-using System.Text.RegularExpressions;
+using System.Security.Claims;
 
 namespace QuizAPI.Controllers
 {
@@ -13,6 +13,7 @@ namespace QuizAPI.Controllers
     [Route("api/[controller]")]
     public class QuizController : ControllerBase
     {
+        private const double PassingScorePercent = 70.0;
         private readonly QuizQueryService _query;
         private readonly QuizDbContext _db;
 
@@ -134,6 +135,26 @@ namespace QuizAPI.Controllers
             result.ScorePercent = result.TotalQuestions == 0
                 ? 0
                 : Math.Round((double)result.CorrectCount / result.TotalQuestions * 100.0, 2);
+            result.Passed = result.ScorePercent >= PassingScorePercent;
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                _db.UserQuizAttempts.Add(new UserQuizAttempt
+                {
+                    UserId = userId,
+                    QuizId = quiz.Id,
+                    QuizTitle = quiz.Title,
+                    QuizCategory = string.IsNullOrWhiteSpace(quiz.Category) ? "Uncategorized" : quiz.Category,
+                    TotalQuestions = result.TotalQuestions,
+                    CorrectCount = result.CorrectCount,
+                    ScorePercent = result.ScorePercent,
+                    Passed = result.Passed,
+                    SubmittedUtc = DateTime.UtcNow
+                });
+
+                await _db.SaveChangesAsync();
+            }
 
             return Ok(result);
         }
