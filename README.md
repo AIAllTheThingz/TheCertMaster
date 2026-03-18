@@ -61,6 +61,12 @@ dotnet build
 dotnet run
 ```
 
+Or use the bootstrap script to automate the first-time local setup:
+
+```powershell
+pwsh .\scripts\bootstrap-dev.ps1
+```
+
 On startup in `Development`, the app will:
 
 - apply EF Core migrations automatically
@@ -154,6 +160,7 @@ Important configuration keys:
 - `Jwt:Issuer`
 - `Jwt:Audience`
 - `Cors:AllowedOrigins`
+- `PublicApp:BaseUrl`
 - `DevAdmin:Email`
 - `DevAdmin:Password`
 - `SampleData:Enabled`
@@ -174,6 +181,7 @@ Jwt__Key=YOUR-LONG-RANDOM-SECRET-AT-LEAST-32-CHARS
 Jwt__Issuer=QuizAPI
 Jwt__Audience=QuizAPIUsers
 Cors__AllowedOrigins__0=https://your-production-site.example
+PublicApp__BaseUrl=https://your-production-site.example
 ```
 
 Startup will now fail fast if required production configuration is missing.
@@ -192,6 +200,12 @@ dotnet build
 - [release checklist](docs/release-checklist.md): pre-push and release verification steps
 - [DEPLOYMENT.md](DEPLOYMENT.md): production deployment guide
 - [FAQ.md](docs/FAQ.md): common setup and troubleshooting questions
+
+## Automation Helpers
+
+- [bootstrap-dev.ps1](scripts/bootstrap-dev.ps1): restore, build, and initialize a local development setup
+- [prepare-production.ps1](scripts/prepare-production.ps1): publish a release build and generate a production env template
+- [appsettings.Production.template.json](appsettings.Production.template.json): production configuration reference
 
 ## Health Check
 

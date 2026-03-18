@@ -19,9 +19,10 @@ Set these values in the target environment:
 ```text
 ConnectionStrings__DefaultConnection=Server=YOURSERVER;Database=YOURDB;User Id=YOURUSER;Password=YOURPASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=True;
 Jwt__Key=YOUR-LONG-RANDOM-SECRET-AT-LEAST-32-CHARS
-Jwt__Issuer=QuizAPI
-Jwt__Audience=QuizAPIUsers
+Jwt__Issuer=TheCertMaster
+Jwt__Audience=TheCertMasterUsers
 Cors__AllowedOrigins__0=https://your-production-site.example
+PublicApp__BaseUrl=https://your-production-site.example
 ```
 
 Optional production settings:
@@ -41,6 +42,18 @@ dotnet publish -c Release -o .\publish
 ```
 
 Deploy the contents of the `publish` folder to the target server.
+
+You can automate the release publish plus environment-template generation with:
+
+```powershell
+pwsh .\scripts\prepare-production.ps1
+```
+
+That script:
+
+- generates a `deploy\production.env.example` file
+- creates a random JWT secret placeholder
+- publishes a `Release` build to `deploy\publish`
 
 ## Database
 
@@ -93,6 +106,7 @@ These runtime folders should be persisted appropriately on the host and not trea
 - JWT key is set and strong
 - CORS origins are correct
 - SMTP settings are configured if email features are needed
+- `PublicApp__BaseUrl` is set correctly for email verification links
 - database migration has been applied
 - sample/dev credentials are not relied on in production
 - `ASPNETCORE_ENVIRONMENT` is set to `Production`
