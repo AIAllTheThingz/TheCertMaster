@@ -3,19 +3,23 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Quiz Runner</title>
+    <title>The Cert Master Quiz Runner</title>
     <style>
         :root {
             color-scheme: light;
-            --bg: #f4f7fb;
-            --panel: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --accent: #1d4ed8;
-            --accent-hover: #1e40af;
-            --accent-soft: #dbeafe;
-            --border: #d1d5db;
-            --shadow: rgba(15, 23, 42, 0.08);
+            --bg: #f5efe3;
+            --bg-soft: #fffaf2;
+            --panel: rgba(255, 252, 247, 0.92);
+            --panel-strong: #fffdf9;
+            --text: #182230;
+            --muted: #5f6c7d;
+            --accent: #0f3d57;
+            --accent-hover: #0b2d40;
+            --accent-soft: #dcebf3;
+            --highlight: #c57f17;
+            --highlight-soft: #f8e3bc;
+            --border: rgba(24, 34, 48, 0.12);
+            --shadow: rgba(24, 34, 48, 0.12);
             --success-bg: #ecfdf3;
             --success-text: #166534;
             --error-bg: #fef2f2;
@@ -30,13 +34,43 @@
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px 16px 48px;
-            background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+            background:
+                radial-gradient(circle at top left, rgba(197, 127, 23, 0.15), transparent 28%),
+                radial-gradient(circle at top right, rgba(15, 61, 87, 0.18), transparent 22%),
+                linear-gradient(180deg, #fdf7ea 0%, var(--bg) 52%, #f1eadc 100%);
             color: var(--text);
         }
 
         .wrap {
+            position: relative;
             max-width: 920px;
             margin: 0 auto;
+        }
+
+        .wrap::before,
+        .wrap::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            pointer-events: none;
+            filter: blur(12px);
+            opacity: 0.65;
+        }
+
+        .wrap::before {
+            top: 1rem;
+            right: 0;
+            width: 160px;
+            height: 160px;
+            background: rgba(197, 127, 23, 0.12);
+        }
+
+        .wrap::after {
+            top: 18rem;
+            left: -1.5rem;
+            width: 190px;
+            height: 190px;
+            background: rgba(15, 61, 87, 0.08);
         }
 
         .eyebrow {
@@ -47,27 +81,33 @@
             background: var(--accent-soft);
             color: var(--accent);
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
         h1 {
             margin: 0 0 0.75rem;
-            font-size: 2rem;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2.2rem, 4vw, 3.7rem);
+            line-height: 1;
+            letter-spacing: -0.03em;
         }
 
         .lead {
             margin: 0 0 1rem;
             color: var(--muted);
-            line-height: 1.7;
+            line-height: 1.8;
         }
 
         .card {
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 18px;
-            margin: 12px 0;
-            box-shadow: 0 18px 40px var(--shadow);
+            border-radius: 26px;
+            padding: 1.3rem;
+            margin: 14px 0;
+            box-shadow: 0 26px 54px var(--shadow);
+            backdrop-filter: blur(10px);
         }
 
         .row {
@@ -85,25 +125,27 @@
 
         input[type="text"], select {
             padding: 10px 12px;
-            border-radius: 12px;
+            border-radius: 14px;
             border: 1px solid var(--border);
-            background: #fff;
+            background: rgba(255, 255, 255, 0.92);
             color: var(--text);
             min-width: 260px;
         }
 
         button {
             padding: 10px 14px;
-            border-radius: 12px;
+            border-radius: 14px;
             border: 1px solid var(--accent);
             background: var(--accent);
             color: #fff;
             cursor: pointer;
             font-weight: 700;
+            transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
         }
 
         button:hover {
             background: var(--accent-hover);
+            transform: translateY(-1px);
         }
 
         button:disabled {
@@ -116,8 +158,10 @@
         }
 
         .qtext {
-            font-size: 18px;
+            font-size: 1.18rem;
             margin: 0 0 10px;
+            line-height: 1.6;
+            font-weight: 600;
         }
 
         .progress {
@@ -138,9 +182,9 @@
             align-items: flex-start;
             gap: 10px;
             padding: 10px;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid #dbe4f0;
-            background: #f8fafc;
+            background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(247, 244, 237, 0.9));
         }
 
         .answer input {
@@ -151,9 +195,9 @@
             display: inline-block;
             padding: 2px 10px;
             border-radius: 999px;
-            background: var(--accent-soft);
-            border: 1px solid #bfdbfe;
-            color: var(--accent);
+            background: var(--highlight-soft);
+            border: 1px solid rgba(197, 127, 23, 0.24);
+            color: #8a5610;
             font-size: 12px;
             font-weight: 700;
         }
@@ -195,6 +239,38 @@
             margin: 0 0 1.25rem;
         }
 
+        .toplinks a {
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .runner-header {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .header-card {
+            border-radius: 22px;
+            border: 1px solid rgba(24, 34, 48, 0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,251,244,0.96));
+            padding: 1rem 1.05rem;
+        }
+
+        .header-card strong {
+            display: block;
+            margin-bottom: 0.3rem;
+            color: var(--accent);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.2rem;
+        }
+
+        .header-card span {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
         #status {
             margin-top: 10px;
             padding: 0.9rem 1rem;
@@ -216,20 +292,46 @@
             border-top: 1px solid #e5e7eb;
             margin: 14px 0;
         }
+
+        @media (max-width: 780px) {
+            .runner-header {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 14px 10px 32px;
+            }
+
+            .card {
+                border-radius: 22px;
+                padding: 1rem;
+            }
+
+            .row {
+                align-items: stretch;
+            }
+
+            select,
+            button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="wrap">
-        <div class="eyebrow">DevQuizAPI Quiz Runner</div>
-        <h1>Quiz Runner</h1>
-        <p class="lead">
-            Choose a category, load an available quiz, and work through exam-style questions with image support and
-            per-question feedback at the end.
+        <div class="eyebrow">The Cert Master</div>
+        <h1 id="pageTitle">Quiz Selection</h1>
+        <p class="lead" style="margin-top: -0.15rem; color: var(--accent); font-weight: 700;">
+            Pissing Certificate Excellence
         </p>
-        <div class="toplinks">
-            <a href="/">Open Landing Page</a>
-            <a href="/upload.html">Open Admin Panel</a>
-            <a href="/swapi.html">Open Swagger API</a>
+        <div class="runner-header">
+            <div class="header-card">
+                <strong>Focused practice</strong>
+                <span>Choose a quiz, work through randomized questions, and submit once you are ready for scored feedback. You can skip questions by selecting Next, which will leave them unanswered and move you forward. Selecting Restart (re-randomize) starts the quiz over from the beginning with the questions and answers in a different order. Selecting Submit ends the quiz and activates the Select New Quiz button. Or you can just refresh the page and select a new quiz ;-)</span>
+            </div>
         </div>
 
         <div class="card" id="pickerCard">
@@ -329,6 +431,7 @@
         const el = (id) => document.getElementById(id);
         const categorySelect = el('categorySelect');
         const quizSelect = el('quizSelect');
+        const pageTitle = el('pageTitle');
         const pickerCard = el('pickerCard');
         const status = el('status');
         const quizCard = el('quizCard');
@@ -454,6 +557,7 @@
 
             const q = quizDto.questions[index];
             quizTitle.textContent = quizDto.title || 'Quiz';
+            if (pageTitle) pageTitle.textContent = quizDto.title || 'Quiz Selection';
             qCounter.textContent = `Question ${index + 1} of ${quizDto.questions.length}`;
 
             const selected = ensureSet(q.id);
@@ -630,6 +734,7 @@
             quizDto = null;
             index = 0;
             selections.clear();
+            if (pageTitle) pageTitle.textContent = 'Quiz Selection';
 
             // Hide quiz + results
             quizCard.style.display = 'none';
