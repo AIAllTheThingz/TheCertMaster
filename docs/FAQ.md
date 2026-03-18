@@ -15,6 +15,48 @@ In local development, the default seeded admin credentials are:
 
 These are for local development only and should be changed for any shared environment.
 
+## How do public users create an account?
+
+Open [register.html](../wwwroot/register.html), create an account with your email address, and then confirm the verification link sent through SMTP.
+
+After verification, sign in through [account.html](../wwwroot/account.html) or any page using the normal login flow.
+
+## Where can I see my current pass / fail list of tests?
+
+Sign in on [account.html](../wwwroot/account.html).
+
+That page shows:
+
+- total quiz attempts
+- passed attempts
+- failed attempts
+- your current quiz history with pass/fail status, score, and completion time
+
+Only signed-in quiz submissions are stored on your account.
+
+## Why is my quiz not showing up in account history?
+
+The most common cause is taking the quiz without being signed in.
+
+Quiz-taking works anonymously, but anonymous submissions are not saved to a user account. To persist the result:
+
+1. sign in first
+2. take the quiz
+3. press `Submit`
+
+## What does the Home button do after I submit a quiz?
+
+After `Submit`, the `Home` button becomes active in [quiz.html](../wwwroot/quiz.html).
+
+It sends the user to [result-home.html](../wwwroot/result-home.html), which shows:
+
+- the most recent quiz taken
+- pass or fail status
+- score
+- correct answer count
+
+That page also includes a centered `Select New Quiz` button to return to quiz selection quickly.
+
 ## Why does Swagger ask me for a bearer token?
 
 Protected endpoints require JWT authentication.
@@ -65,6 +107,7 @@ Check:
 - `Jwt__Issuer`
 - `Jwt__Audience`
 - `Cors__AllowedOrigins__0`
+- `PublicApp__BaseUrl`
 
 See [DEPLOYMENT.md](../DEPLOYMENT.md) for the expected production setup.
 

@@ -6,10 +6,18 @@ The format is based on Keep a Changelog, and this project follows semantic-style
 
 ## [Unreleased]
 
-### Planned
+### Added
 
-- Deployment documentation and release workflow improvements
-- Beta qualification tracking
+- Public user account management page
+- Persisted signed-in quiz history with pass/fail tracking
+- Public email verification flow support in the documented user path
+- Quiz result home page for the most recent submitted attempt
+
+### Changed
+
+- README now documents the public registration, account, and result-home flows
+- FAQ now covers account history, signed-in quiz tracking, and the post-submit Home button flow
+- Quiz runner now unlocks a `Home` button after submit and routes users into a result summary page
 
 ## [v0.1.0-alpha] - 2026-03-17
 

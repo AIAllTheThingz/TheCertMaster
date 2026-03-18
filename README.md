@@ -7,12 +7,14 @@ This repository is the active source-of-truth application for the project.
 ## What It Does
 
 - JWT-based authentication for admin and user access
+- public self-registration with email verification
 - quiz listing and quiz-taking APIs
+- persisted signed-in quiz history with pass/fail tracking
 - CSV/TXT quiz import workflow
 - uploaded file management
 - admin user management
 - SMTP configuration and email test endpoints
-- browser-based utility pages for auth testing, quiz running, and admin upload/import work
+- browser-based pages for public access, account management, quiz running, and admin upload/import work
 
 ## Tech Stack
 
@@ -129,19 +131,47 @@ Quick summary:
 ## Browser Entry Points
 
 - [index.html](wwwroot/index.html): public landing page for the application
+- [register.html](wwwroot/register.html): public user registration page with email verification flow
+- [verify-email.html](wwwroot/verify-email.html): email confirmation landing page
+- [account.html](wwwroot/account.html): signed-in user account page with password change and quiz history
 - [upload.html](wwwroot/upload.html): admin dashboard for login, file upload, imports, user management, SMTP settings
 - [quiz.html](wwwroot/quiz.html): quiz runner UI
+- [result-home.html](wwwroot/result-home.html): most recent submitted quiz result page with pass/fail summary and a direct path back to quiz selection
 
 In development, Swagger is available at `/swapi.html`.
+
+## Public User Flow
+
+The application now supports a full public user path:
+
+1. Open [register.html](wwwroot/register.html) and create an account
+2. Confirm the email verification link
+3. Sign in on [account.html](wwwroot/account.html)
+4. Take quizzes on [quiz.html](wwwroot/quiz.html)
+5. Submit the quiz to record the result on your account
+6. Use the `Home` button after submit to open [result-home.html](wwwroot/result-home.html)
+
+Signed-in quiz attempts are stored on the user account. Anonymous quiz sessions still work, but they are not added to account history.
+
+Current scoring behavior:
+
+- quiz attempts with a score of `70%` or higher are marked as `Pass`
+- quiz attempts below `70%` are marked as `Fail`
 
 ## Main API Areas
 
 - `POST /api/auth/login`
 - `POST /api/auth/register` admin-only user creation endpoint
+- `POST /api/auth/public-register`
+- `POST /api/auth/resend-verification`
+- `GET /api/auth/confirm-email`
 - `GET /api/categories`
 - `GET /api/quiz`
 - `GET /api/quiz/{quizId}/random`
 - `POST /api/quiz/{quizId}/submit`
+- `GET /api/account/me`
+- `GET /api/account/attempts`
+- `POST /api/account/change-password`
 - `GET /api/files`
 - `POST /api/import/upload`
 - `POST /api/import/process/{fileName}`
@@ -178,8 +208,8 @@ Recommended production environment variables:
 ```text
 ConnectionStrings__DefaultConnection=Server=YOURSERVER;Database=YOURDB;User Id=YOURUSER;Password=YOURPASSWORD;TrustServerCertificate=True;MultipleActiveResultSets=True;
 Jwt__Key=YOUR-LONG-RANDOM-SECRET-AT-LEAST-32-CHARS
-Jwt__Issuer=QuizAPI
-Jwt__Audience=QuizAPIUsers
+Jwt__Issuer=TheCertMaster
+Jwt__Audience=TheCertMasterUsers
 Cors__AllowedOrigins__0=https://your-production-site.example
 PublicApp__BaseUrl=https://your-production-site.example
 ```
