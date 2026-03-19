@@ -1,6 +1,6 @@
-# DevQuizAPI
+# QuizAPI
 
-`DevQuizAPI` is a .NET 9 quiz platform for building, importing, managing, and taking quizzes through both API endpoints and simple browser-based pages.
+`QuizAPI` is a .NET 9 quiz platform for building, importing, managing, and taking quizzes through both API endpoints and simple browser-based pages.
 
 This repository is the active source-of-truth application for the project.
 
@@ -282,6 +282,6 @@ Remote:
 
 ## Notes
 
-- `DevQuizAPI` is the maintained application going forward.
+- `QuizAPI` is the maintained application going forward.
 - A public sample quiz package is included for demo and onboarding purposes.
 - The repository is designed for local development, technical preview use, and continued hardening toward beta.
