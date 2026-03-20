@@ -195,6 +195,30 @@ if (-not [string]::IsNullOrWhiteSpace($TestRecipientEmail)) {
         $smtpClient.Send($mailMessage)
         Write-Host "SMTP test email sent to $TestRecipientEmail" -ForegroundColor Green
     }
+    catch {
+        $baseMessage = $_.Exception.Message
+        $innerMessage = $_.Exception.InnerException.Message
+
+        Write-Error "SMTP test send failed. $baseMessage"
+
+        if (-not [string]::IsNullOrWhiteSpace($innerMessage)) {
+            Write-Warning "Inner SMTP error: $innerMessage"
+        }
+
+        Write-Host ""
+        Write-Host "Common causes:" -ForegroundColor Yellow
+        Write-Host "- The Windows SMTP virtual server is installed but not configured to relay outbound mail."
+        Write-Host "- The server cannot resolve external DNS or reach remote mail hosts on port 25."
+        Write-Host "- Your network or ISP blocks outbound SMTP on port 25."
+        Write-Host "- A smart host or authenticated relay is required for external delivery."
+        Write-Host ""
+        Write-Host "Next checks:" -ForegroundColor Yellow
+        Write-Host "- Verify DNS resolution from the server."
+        Write-Host "- Verify outbound TCP 25 is allowed."
+        Write-Host "- If you want external delivery, configure a smart host or authenticated SMTP relay."
+        Write-Host "- If you only want local app testing, keep the app pointed at localhost and test against a local mailbox or pickup flow."
+        throw
+    }
     finally {
         $mailMessage.Dispose()
         $smtpClient.Dispose()

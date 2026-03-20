@@ -223,6 +223,23 @@ How sender defaults are chosen:
 
 This keeps SMTP testing aligned with the same hostname pattern used by `PublicBaseUrl` and `BootstrapAdminEmail`.
 
+Important note about external email tests:
+
+- this script configures QuizAPI to talk to the local Windows SMTP service
+- it does not fully configure Windows SMTP relay rules, smart-host routing, or outbound mail policy for your network
+- sending to an external address such as Gmail can still fail if the server cannot relay outbound mail on port `25`
+
+So a successful script run means:
+
+- QuizAPI now has SMTP settings written for application testing
+- the Windows SMTP service is installed and running
+
+It does not automatically guarantee:
+
+- external mail delivery to providers like Gmail
+- relay permission for anonymous local submissions
+- smart-host forwarding through your organization or ISP
+
 ## Database
 
 The application automatically migrates the database only in development.
