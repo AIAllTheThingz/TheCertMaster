@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>The Cert Master Admin Dashboard</title>
+    <title>TheCertMaster Admin Dashboard</title>
     <style>
         :root {
             color-scheme: light;
-            --bg: #f5efe3;
-            --bg-soft: #fffaf2;
-            --panel: rgba(255, 252, 247, 0.9);
-            --panel-strong: #fffdf9;
-            --text: #182230;
-            --muted: #5f6c7d;
-            --accent: #0f3d57;
-            --accent-hover: #0b2d40;
-            --accent-soft: #dcebf3;
-            --highlight: #c57f17;
-            --highlight-soft: #f8e3bc;
-            --border: rgba(24, 34, 48, 0.12);
+            --bg: #d3d6db;
+            --bg-soft: #e8eaed;
+            --panel: rgba(211, 214, 219, 0.9);
+            --panel-strong: #eef0f3;
+            --text: #303841;
+            --muted: #3a4750;
+            --accent: #be3144;
+            --accent-hover: #9f2638;
+            --accent-soft: rgba(190, 49, 68, 0.14);
+            --highlight: #be3144;
+            --highlight-soft: rgba(190, 49, 68, 0.12);
+            --border: rgba(48, 56, 65, 0.16);
             --danger: #9f2a1e;
             --danger-hover: #7e2017;
             --success-bg: #ecfdf3;
@@ -26,7 +26,7 @@
             --warning-text: #9a3412;
             --error-bg: #fef2f2;
             --error-text: #991b1b;
-            --shadow: rgba(24, 34, 48, 0.12);
+            --shadow: rgba(48, 56, 65, 0.18);
         }
 
         * {
@@ -38,9 +38,9 @@
             margin: 0;
             padding: 2rem 1rem 4rem;
             background:
-                radial-gradient(circle at top left, rgba(197, 127, 23, 0.15), transparent 28%),
-                radial-gradient(circle at top right, rgba(15, 61, 87, 0.18), transparent 22%),
-                linear-gradient(180deg, #fdf7ea 0%, var(--bg) 52%, #f1eadc 100%);
+                radial-gradient(circle at top left, rgba(190, 49, 68, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(58, 71, 80, 0.24), transparent 26%),
+                linear-gradient(180deg, #dfe2e6 0%, var(--bg) 52%, #c5c9cf 100%);
             color: var(--text);
         }
 
@@ -61,10 +61,10 @@
             align-items: center;
             margin-bottom: 1.2rem;
             padding: 0.95rem 1rem;
-            background: rgba(255, 252, 247, 0.78);
+            background: rgba(232, 234, 237, 0.82);
             border: 1px solid var(--border);
             border-radius: 20px;
-            box-shadow: 0 18px 36px rgba(24, 34, 48, 0.08);
+            box-shadow: 0 18px 36px rgba(48, 56, 65, 0.12);
             backdrop-filter: blur(10px);
         }
 
@@ -83,8 +83,8 @@
             justify-content: center;
             padding: 0.6rem 0.9rem;
             border-radius: 999px;
-            border: 1px solid rgba(24, 34, 48, 0.12);
-            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(48, 56, 65, 0.14);
+            background: rgba(238, 240, 243, 0.82);
             color: var(--text);
             text-decoration: none;
             font-weight: 700;
@@ -92,8 +92,8 @@
         }
 
         .top-link:hover {
-            background: rgba(255, 255, 255, 0.96);
-            border-color: rgba(15, 61, 87, 0.24);
+            background: rgba(238, 240, 243, 0.98);
+            border-color: rgba(190, 49, 68, 0.28);
         }
 
         main::before,
@@ -111,7 +111,7 @@
             right: 0;
             width: 180px;
             height: 180px;
-            background: rgba(197, 127, 23, 0.12);
+            background: rgba(190, 49, 68, 0.16);
         }
 
         main::after {
@@ -119,7 +119,7 @@
             left: -1.5rem;
             width: 220px;
             height: 220px;
-            background: rgba(15, 61, 87, 0.08);
+            background: rgba(58, 71, 80, 0.14);
         }
 
         h1, h2, h3 {
@@ -279,7 +279,7 @@
 
         th {
             color: #334155;
-            background: rgba(15, 61, 87, 0.04);
+            background: rgba(58, 71, 80, 0.08);
         }
 
         #status {
@@ -315,7 +315,7 @@
             margin-top: 1rem;
             padding: 0.9rem 1rem;
             border-left: 4px solid var(--highlight);
-            background: linear-gradient(90deg, rgba(248, 227, 188, 0.72), rgba(255, 252, 247, 0.9));
+            background: linear-gradient(90deg, rgba(190, 49, 68, 0.12), rgba(232, 234, 237, 0.92));
             border-radius: 16px;
         }
 
@@ -386,7 +386,7 @@
     <section class="hero">
         <div class="hero-grid">
             <div class="hero-copy">
-                <div class="eyebrow">The Cert Master Admin</div>
+                <div class="eyebrow">TheCertMaster Admin</div>
                 <h1>Operate the quiz platform like a real content console, not just a test page.</h1>
                 <p class="lead">
                     Upload structured quiz packages, verify imports, manage users, and tune supporting services from one
@@ -420,7 +420,7 @@
     <form id="loginForm">
         <h3>Admin Login</h3>
         <label>Email:</label><br />
-        <input type="email" id="email" placeholder="admin@quizapi.local" autocomplete="username" required /><br />
+        <input type="email" id="email" placeholder="admin@thecertmaster.local" autocomplete="username" required /><br />
         <label>Password:</label><br />
         <input type="password" id="password" placeholder="Enter your admin password" autocomplete="current-password" required /><br />
         <div class="muted">Development uses a seeded admin account by default. Shared environments should use a non-default admin password.</div>
@@ -493,7 +493,7 @@
                 </div>
                 <div>
                     <label>From Name</label><br/>
-                    <input type="text" id="smtpFromName" class="plain-text-input" maxlength="50" pattern="[A-Za-z ]*" title="Use letters and spaces only." placeholder="QuizAPI" />
+                    <input type="text" id="smtpFromName" class="plain-text-input" maxlength="50" pattern="[A-Za-z ]*" title="Use letters and spaces only." placeholder="TheCertMaster" />
                 </div>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; align-items:flex-end;">
@@ -1033,7 +1033,7 @@ const loginForm = document.getElementById("loginForm");
                     password: smtpPassword.value,
                     keepExistingPasswordWhenBlank: true,
                     fromEmail: smtpFromEmail.value.trim(),
-                    fromName: smtpFromName.value.trim() || 'QuizAPI'
+                    fromName: smtpFromName.value.trim() || 'TheCertMaster'
                 };
                 const res = await fetchWithAdminAuth('/api/admin/smtp', {
                     method: 'POST',

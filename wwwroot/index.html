@@ -4,23 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <title>The Cert Master</title>
+    <title>TheCertMaster</title>
     <style>
         :root {
             color-scheme: light;
-            --bg: #f5efe3;
-            --bg-soft: #fffaf2;
-            --panel: rgba(255, 252, 247, 0.88);
-            --panel-strong: #fffdf9;
-            --text: #182230;
-            --muted: #5f6c7d;
-            --accent: #0f3d57;
-            --accent-hover: #0b2d40;
-            --accent-soft: #dcebf3;
-            --highlight: #c57f17;
-            --highlight-soft: #f8e3bc;
-            --border: rgba(24, 34, 48, 0.12);
-            --shadow: rgba(24, 34, 48, 0.12);
+            --bg: #d3d6db;
+            --bg-soft: #e8eaed;
+            --panel: rgba(211, 214, 219, 0.9);
+            --panel-strong: #eef0f3;
+            --text: #303841;
+            --muted: #3a4750;
+            --accent: #be3144;
+            --accent-hover: #9f2638;
+            --accent-soft: rgba(190, 49, 68, 0.14);
+            --highlight: #be3144;
+            --highlight-soft: rgba(190, 49, 68, 0.12);
+            --border: rgba(48, 56, 65, 0.16);
+            --shadow: rgba(48, 56, 65, 0.18);
         }
 
         * {
@@ -32,9 +32,9 @@
             min-height: 100vh;
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(197, 127, 23, 0.14), transparent 30%),
-                radial-gradient(circle at top right, rgba(15, 61, 87, 0.18), transparent 24%),
-                linear-gradient(180deg, #fdf7ea 0%, var(--bg) 52%, #f1eadc 100%);
+                radial-gradient(circle at top left, rgba(190, 49, 68, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(58, 71, 80, 0.24), transparent 26%),
+                linear-gradient(180deg, #dfe2e6 0%, var(--bg) 52%, #c5c9cf 100%);
             color: var(--text);
         }
 
@@ -52,10 +52,10 @@
             align-items: center;
             margin-bottom: 1.2rem;
             padding: 0.95rem 1rem;
-            background: rgba(255, 252, 247, 0.78);
+            background: rgba(232, 234, 237, 0.82);
             border: 1px solid var(--border);
             border-radius: 20px;
-            box-shadow: 0 18px 36px rgba(24, 34, 48, 0.08);
+            box-shadow: 0 18px 36px rgba(48, 56, 65, 0.12);
             backdrop-filter: blur(10px);
         }
 
@@ -74,8 +74,8 @@
             justify-content: center;
             padding: 0.6rem 0.9rem;
             border-radius: 999px;
-            border: 1px solid rgba(24, 34, 48, 0.12);
-            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(48, 56, 65, 0.14);
+            background: rgba(238, 240, 243, 0.82);
             color: var(--text);
             text-decoration: none;
             font-weight: 700;
@@ -85,8 +85,8 @@
 
         .top-link:hover {
             transform: translateY(-1px);
-            background: rgba(255, 255, 255, 0.96);
-            border-color: rgba(15, 61, 87, 0.24);
+            background: rgba(255, 255, 255, 0.98);
+            border-color: rgba(190, 49, 68, 0.28);
         }
 
         main::before,
@@ -105,7 +105,7 @@
             right: 0;
             width: 180px;
             height: 180px;
-            background: rgba(197, 127, 23, 0.12);
+            background: rgba(190, 49, 68, 0.16);
         }
 
         main::after {
@@ -113,7 +113,7 @@
             left: -2rem;
             width: 220px;
             height: 220px;
-            background: rgba(15, 61, 87, 0.08);
+            background: rgba(58, 71, 80, 0.14);
         }
 
         .hero,
@@ -172,8 +172,8 @@
         }
 
         .side-card {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 251, 244, 0.95));
-            border: 1px solid rgba(24, 34, 48, 0.08);
+            background: linear-gradient(180deg, rgba(238, 240, 243, 0.92), rgba(226, 229, 233, 0.98));
+            border: 1px solid rgba(48, 56, 65, 0.1);
             border-radius: 22px;
             padding: 1.2rem 1.25rem;
         }
@@ -218,7 +218,7 @@
         .button {
             background: var(--accent);
             color: #fff;
-            box-shadow: 0 12px 22px rgba(15, 61, 87, 0.18);
+            box-shadow: 0 12px 22px rgba(190, 49, 68, 0.22);
         }
 
         .button:hover {
@@ -229,11 +229,11 @@
         .button-secondary {
             border: 1px solid var(--border);
             color: var(--text);
-            background: rgba(255, 255, 255, 0.66);
+            background: rgba(232, 234, 237, 0.74);
         }
 
         .button-secondary:hover {
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.98);
             transform: translateY(-1px);
         }
 
@@ -280,8 +280,8 @@
             margin-top: 1.35rem;
             padding: 1.2rem 1.3rem;
             border-left: 4px solid var(--highlight);
-            background: linear-gradient(90deg, rgba(248, 227, 188, 0.72), rgba(255, 252, 247, 0.9));
-            color: #334155;
+            background: linear-gradient(90deg, rgba(190, 49, 68, 0.12), rgba(232, 234, 237, 0.92));
+            color: var(--text);
             border-radius: 18px;
         }
 
@@ -338,10 +338,10 @@
 
         <section class="hero">
             <div class="hero-copy">
-                <div class="eyebrow">The Cert Master</div>
+                <div class="eyebrow">TheCertMaster</div>
                 <h1>Train for high-stakes technical exams with a sharper, more realistic practice flow.</h1>
                 <p class="lead">
-                    The Cert Master is built to help learners pursue educational excellence through certification-style quiz
+                    TheCertMaster is built to help learners pursue educational excellence through certification-style quiz
                     sessions, structured review, and practical exam preparation that mirrors real-world IT testing patterns.
                 </p>
                 <p class="lead" style="margin-top: 0.35rem; color: var(--accent); font-weight: 700;">
@@ -358,7 +358,7 @@
                 <div class="side-card">
                     <h2>Built for serious practice</h2>
                     <p>
-                        The Cert Master is designed to support structured preparation for technical certifications through
+                        TheCertMaster is designed to support structured preparation for technical certifications through
                         clean quiz delivery, repeatable review, and curated question content.
                     </p>
                 </div>
@@ -406,7 +406,7 @@
         </section>
 
         <div class="footer-note">
-            <strong>The Cert Master</strong> is the active public-facing product experience for this platform.
+            <strong>TheCertMaster</strong> is the active public-facing product experience for this platform.
         </div>
     </main>
     <script>
