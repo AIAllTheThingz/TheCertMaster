@@ -96,6 +96,19 @@ The application now rate-limits repeated requests on public auth-sensitive endpo
 
 If you hit `429`, wait a moment and try again instead of rapidly retrying the same request.
 
+## Why is SMTP testing to Gmail failing even though SMTP is installed?
+
+Installing the Windows SMTP feature is not enough by itself to guarantee external mail delivery.
+
+Common causes:
+
+- the local Windows SMTP service is not running
+- outbound relay on port `25` is blocked by the network
+- the Windows SMTP service is not configured for external relay
+- the SMTP provider requires authenticated submission with STARTTLS instead of anonymous local relay
+
+For production-style delivery, prefer an authenticated SMTP relay and configure it through [configure-smtp-test.ps1](../scripts/configure-smtp-test.ps1) with a real host, username, password, and `-UseStartTls:$true` when required.
+
 ## Why am I getting `415 Unsupported Media Type` on login?
 
 The login endpoint expects form data in Swagger and browser form posts.

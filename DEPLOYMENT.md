@@ -228,6 +228,7 @@ Important note about external email tests:
 - this script configures QuizAPI to talk to the local Windows SMTP service
 - it does not fully configure Windows SMTP relay rules, smart-host routing, or outbound mail policy for your network
 - sending to an external address such as Gmail can still fail if the server cannot relay outbound mail on port `25`
+- on our server test, Windows SMTP accepted configuration but `inetinfo.exe` crashed inside `SMTPSVC.dll` during send attempts, so local Windows SMTP should be treated as optional testing infrastructure, not the preferred production delivery path
 
 So a successful script run means:
 
@@ -239,6 +240,34 @@ It does not automatically guarantee:
 - external mail delivery to providers like Gmail
 - relay permission for anonymous local submissions
 - smart-host forwarding through your organization or ISP
+
+Recommended production SMTP path:
+
+- use a real authenticated SMTP relay instead of relying on local anonymous relay
+- prefer a provider such as Microsoft 365, SendGrid, SMTP2GO, or another managed relay
+- use port `587` with `-UseStartTls:$true` when the provider requires STARTTLS
+- set `FromEmail` to a real mailbox or approved sender address for that provider
+
+Example for an authenticated relay:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smtp-test.ps1 `
+  -DeploymentRoot C:\Deployment `
+  -SmtpHost smtp.office365.com `
+  -SmtpPort 587 `
+  -Username your-real-mailbox@yourdomain.com `
+  -Password 'your-real-password-or-app-password' `
+  -UseStartTls:$true `
+  -FromEmail your-real-mailbox@yourdomain.com `
+  -FromName 'QuizAPI' `
+  -TestRecipientEmail you@example.com
+```
+
+Practical guidance:
+
+- use the local Windows SMTP service only if you specifically want local relay testing and you have verified the service is stable on that host
+- for real verification emails and password reset delivery, an authenticated external SMTP relay is the safer default
+- if the SMTP provider returns `5.7.3 STARTTLS is required`, rerun the script with `-UseStartTls:$true`
 
 ## Database
 

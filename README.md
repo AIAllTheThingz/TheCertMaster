@@ -280,6 +280,9 @@ dotnet build
 
 - [bootstrap-dev.ps1](scripts/bootstrap-dev.ps1): restore, build, and initialize a local development setup
 - [prepare-production.ps1](scripts/prepare-production.ps1): publish a release build and generate a production env template
+- [ensure-server-prerequisites.ps1](scripts/ensure-server-prerequisites.ps1): install IIS features, .NET 9, hosting bundle, and EF tools on a bare Windows server
+- [install-production-application.ps1](scripts/install-production-application.ps1): publish, configure IIS, run migrations, and create the bootstrap admin on the target server
+- [configure-smtp-test.ps1](scripts/configure-smtp-test.ps1): write SMTP settings for QuizAPI and test mail delivery
 - [post-deploy-smoke-test.ps1](scripts/post-deploy-smoke-test.ps1): verify landing page, health endpoints, and version endpoint after deployment
 - [appsettings.Production.template.json](appsettings.Production.template.json): production configuration reference
 
@@ -303,7 +306,7 @@ This project is tracked in Git and uses `main` as the default branch.
 
 Remote:
 
-- [https://github.com/mezuccolini/QuizAPI.git](https://github.com/mezuccolini/QuizAPI.git)
+- [https://github.com/AIAllTheThingz/TheCertMaster.git](https://github.com/AIAllTheThingz/TheCertMaster.git)
 
 ## Notes
 
