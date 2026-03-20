@@ -76,7 +76,7 @@ wwwroot/images/
 wwwroot/videos/
 
 # Local source copies / archives
-QuizAPI_Source_Code/
+TheCertMaster_Source_Code/
 *.zip
 !samples/*.zip
 

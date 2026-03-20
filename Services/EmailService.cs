@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 
-namespace QuizAPI.Services
+namespace TheCertMaster.Services
 {
     public interface IEmailService
     {

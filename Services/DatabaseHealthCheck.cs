@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using QuizAPI.Data;
+using TheCertMaster.Data;
 
-namespace QuizAPI.Services;
+namespace TheCertMaster.Services;
 
 public sealed class DatabaseHealthCheck : IHealthCheck
 {

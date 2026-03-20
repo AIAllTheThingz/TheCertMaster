@@ -238,31 +238,7 @@
                 .replaceAll("'", '&#39;');
         }
 
-        function render() {
-            const raw = sessionStorage.getItem('latestQuizResult');
-            if (!raw) {
-                resultHost.innerHTML = `
-                    <div class="empty">
-                        <h2>No recent quiz result found</h2>
-                        <p>Complete a quiz first, then use the Home button after Submit to land here with your latest pass or fail result.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            let result;
-            try {
-                result = JSON.parse(raw);
-            } catch {
-                resultHost.innerHTML = `
-                    <div class="empty">
-                        <h2>Recent result unavailable</h2>
-                        <p>The saved quiz result could not be read. Start a new quiz and submit it again.</p>
-                    </div>
-                `;
-                return;
-            }
-
+        function renderResult(result) {
             const passed = !!result.passed;
             const badgeClass = passed ? 'pass' : 'fail';
             const badgeText = passed ? 'Pass' : 'Fail';
@@ -287,6 +263,54 @@
                             <strong style="font-size: 1rem;">${escapeHtml(submittedText)}</strong>
                         </div>
                     </div>
+                </div>
+            `;
+        }
+
+        async function loadLatestAccountResult() {
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                return null;
+            }
+
+            const response = await fetch('/api/account/attempts', {
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const attempts = await response.json();
+            if (!Array.isArray(attempts) || attempts.length === 0) {
+                return null;
+            }
+
+            return attempts[0];
+        }
+
+        async function render() {
+            const raw = sessionStorage.getItem('latestQuizResult');
+            if (raw) {
+                try {
+                    renderResult(JSON.parse(raw));
+                    return;
+                } catch {
+                }
+            }
+
+            const latestAttempt = await loadLatestAccountResult();
+            if (latestAttempt) {
+                renderResult(latestAttempt);
+                return;
+            }
+
+            resultHost.innerHTML = `
+                <div class="empty">
+                    <h2>No recent quiz result found</h2>
+                    <p>Complete a quiz first, then use the Home button after Submit to land here with your latest pass or fail result.</p>
                 </div>
             `;
         }

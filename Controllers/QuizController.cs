@@ -2,13 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using QuizAPI.Data;
-using QuizAPI.DTO;
-using QuizAPI.Models;
-using QuizAPI.Services;
+using TheCertMaster.Data;
+using TheCertMaster.DTO;
+using TheCertMaster.Models;
+using TheCertMaster.Services;
 using System.Security.Claims;
 
-namespace QuizAPI.Controllers
+namespace TheCertMaster.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

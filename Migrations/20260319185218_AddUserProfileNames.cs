@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace QuizAPI.Migrations
+namespace TheCertMaster.Migrations
 {
     /// <inheritdoc />
     public partial class AddUserProfileNames : Migration

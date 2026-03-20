@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
 
-namespace QuizAPI
+namespace TheCertMaster
 {
     public class UploadRequest
     {

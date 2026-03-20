@@ -1,4 +1,4 @@
-namespace QuizAPI.DTO
+namespace TheCertMaster.DTO
 {
     public class RandomizedQuizDto
     {

@@ -18,7 +18,7 @@ Write-Host "Restoring dependencies..." -ForegroundColor Yellow
 dotnet restore
 
 Write-Host "Building solution..." -ForegroundColor Yellow
-dotnet build QuizAPI.sln -c Debug
+dotnet build TheCertMaster.sln -c Debug
 
 Write-Host "Applying development database migration..." -ForegroundColor Yellow
 $env:ASPNETCORE_ENVIRONMENT = "Development"
@@ -27,7 +27,7 @@ dotnet ef database update
 Write-Host ""
 Write-Host "Development setup is ready." -ForegroundColor Green
 Write-Host "Default local admin:" -ForegroundColor Green
-Write-Host "  Email:    admin@quizapi.local"
+Write-Host "  Email:    admin@thecertmaster.local"
 Write-Host "  Password: Admin@123"
 Write-Host ""
 Write-Host "Available local entry points:" -ForegroundColor Green

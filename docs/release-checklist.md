@@ -6,8 +6,8 @@ Use this short checklist before pushing a tagged release.
 
 - update [CHANGELOG.md](../CHANGELOG.md)
 - update the release notes file under [docs/releases](./releases)
-- run `dotnet build QuizAPI.sln -c Release`
-- run `dotnet test QuizAPI.Tests\QuizAPI.Tests.csproj -c Release`
+- run `dotnet build TheCertMaster.sln -c Release`
+- run `dotnet test TheCertMaster.Tests\TheCertMaster.Tests.csproj -c Release`
 - verify [README.md](../README.md) reflects any new user-facing setup changes
 - verify [DEPLOYMENT.md](../DEPLOYMENT.md) still matches production expectations
 - verify rate-limit guidance still matches the configured app defaults

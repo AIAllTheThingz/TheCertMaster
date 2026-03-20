@@ -1,4 +1,4 @@
-namespace QuizAPI.Models
+namespace TheCertMaster.Models
 {
     public class UserQuizAttempt
     {

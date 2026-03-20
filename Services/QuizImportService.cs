@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using QuizAPI.Data;
+using TheCertMaster.Data;
 using System.Globalization;
 using System.Text.Json;
 using System.Text;
 using System.IO.Compression;
 
-namespace QuizAPI.Services
+namespace TheCertMaster.Services
 {
     public class QuizImportService
     {

@@ -37,10 +37,10 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Restore
-        run: dotnet restore QuizAPI.sln
+        run: dotnet restore TheCertMaster.sln
 
       - name: Build
-        run: dotnet build QuizAPI.sln --no-restore
+        run: dotnet build TheCertMaster.sln --no-restore
 
       - name: Test
-        run: dotnet test QuizAPI.Tests/QuizAPI.Tests.csproj --no-build --verbosity normal
+        run: dotnet test TheCertMaster.Tests/TheCertMaster.Tests.csproj --no-build --verbosity normal

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuizAPI.Services;
-using QuizAPI.Validation;
+using TheCertMaster.Services;
+using TheCertMaster.Validation;
 
-namespace QuizAPI.Controllers
+namespace TheCertMaster.Controllers
 {
     [ApiController]
     [Route("api/admin/smtp")]
@@ -50,7 +50,7 @@ namespace QuizAPI.Controllers
             public string Password { get; set; } = "";
             public bool KeepExistingPasswordWhenBlank { get; set; } = true;
             public string FromEmail { get; set; } = "";
-            public string FromName { get; set; } = "QuizAPI";
+            public string FromName { get; set; } = "TheCertMaster";
         }
 
         [HttpPost]
@@ -72,7 +72,7 @@ namespace QuizAPI.Controllers
                 Username = req.Username?.Trim() ?? "",
                 Password = req.Password ?? "",
                 FromEmail = req.FromEmail.Trim(),
-                FromName = string.IsNullOrWhiteSpace(fromName) ? "QuizAPI" : fromName
+                FromName = string.IsNullOrWhiteSpace(fromName) ? "TheCertMaster" : fromName
             };
 
             await _store.SaveAsync(opt, req.KeepExistingPasswordWhenBlank);
@@ -91,7 +91,7 @@ namespace QuizAPI.Controllers
             if (req == null || string.IsNullOrWhiteSpace(req.ToEmail))
                 return BadRequest("ToEmail is required.");
 
-            await _email.SendAsync(req.ToEmail.Trim(), "QuizAPI SMTP Test", "This is a test email from QuizAPI.");
+            await _email.SendAsync(req.ToEmail.Trim(), "TheCertMaster SMTP Test", "This is a test email from TheCertMaster.");
             _logger.LogInformation("SMTP test email sent to {ToEmail}", req.ToEmail.Trim());
             return Ok(new { message = "Test email sent." });
         }

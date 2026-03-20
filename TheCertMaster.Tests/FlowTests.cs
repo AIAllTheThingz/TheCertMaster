@@ -5,19 +5,19 @@ using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using QuizAPI.Data;
-using QuizAPI.Models;
+using TheCertMaster.Data;
+using TheCertMaster.Models;
 using Xunit;
 
-namespace QuizAPI.Tests;
+namespace TheCertMaster.Tests;
 
 public class FlowTests : IAsyncLifetime
 {
-    private readonly QuizApiWebApplicationFactory _factory;
+    private readonly TheCertMasterWebApplicationFactory _factory;
 
     public FlowTests()
     {
-        _factory = new QuizApiWebApplicationFactory();
+        _factory = new TheCertMasterWebApplicationFactory();
     }
 
     public Task InitializeAsync() => _factory.InitializeAsync();
@@ -31,7 +31,7 @@ public class FlowTests : IAsyncLifetime
 
         using var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["email"] = "admin@quizapi.local",
+            ["email"] = "admin@thecertmaster.local",
             ["password"] = "Admin@123"
         });
 
@@ -75,7 +75,7 @@ public class FlowTests : IAsyncLifetime
         var payload = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(payload);
 
-        Assert.Equal("QuizAPI", doc.RootElement.GetProperty("application").GetString());
+        Assert.Equal("TheCertMaster", doc.RootElement.GetProperty("application").GetString());
         Assert.False(string.IsNullOrWhiteSpace(doc.RootElement.GetProperty("environment").GetString()));
         Assert.True(doc.RootElement.TryGetProperty("version", out _));
         Assert.True(doc.RootElement.TryGetProperty("utc", out _));

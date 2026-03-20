@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This document describes a practical deployment path for `DevQuizAPI`.
+This document describes a practical deployment path for `TheCertMaster`.
 
 ## Deployment Model
 
@@ -83,7 +83,7 @@ C:\Deployment\
   source\                optional if the full source is copied here
 ```
 
-The installation script can also publish directly from a copied source tree if `QuizAPI.csproj` is present under the deployment root or under `C:\Deployment\source`.
+The installation script can also publish directly from a copied source tree if `TheCertMaster.csproj` is present under the deployment root or under `C:\Deployment\source`.
 
 ### Script 1: Ensure Server Prerequisites
 
@@ -134,9 +134,9 @@ Template file:
 
 The checked-in template now defaults to a local server profile:
 
-- `PublicBaseUrl = 'http://quizapi.local'`
-- `BootstrapAdminEmail = 'admin@quizapi.local'`
-- `CorsOrigins = @('http://quizapi.local', 'https://quizapi.local')`
+- `PublicBaseUrl = 'http://thecertmaster.local'`
+- `BootstrapAdminEmail = 'admin@thecertmaster.local'`
+- `CorsOrigins = @('http://thecertmaster.local', 'https://thecertmaster.local')`
 
 That gives you a consistent starting point for an internal server or first production-style install.
 
@@ -167,11 +167,11 @@ Bootstrap admin notes:
 Recommended example:
 
 ```powershell
-PublicBaseUrl = 'http://quizapi.local'
-BootstrapAdminEmail = 'admin@quizapi.local'
+PublicBaseUrl = 'http://thecertmaster.local'
+BootstrapAdminEmail = 'admin@thecertmaster.local'
 CorsOrigins = @(
-    'http://quizapi.local',
-    'https://quizapi.local'
+    'http://thecertmaster.local',
+    'https://thecertmaster.local'
 )
 ```
 
@@ -181,16 +181,16 @@ What each setting means:
 - `BootstrapAdminEmail` is simply the email address of the first admin account the installer creates
 - `CorsOrigins` should include every browser origin that is allowed to call the API
 
-If you use `quizapi.local`, make sure that host name resolves on the server and on any client machine that will browse the site. That usually means a DNS entry or a local `hosts` file entry.
+If you use `thecertmaster.local`, make sure that host name resolves on the server and on any client machine that will browse the site. That usually means a DNS entry or a local `hosts` file entry.
 
-If you leave `PublicBaseUrl = 'http://localhost'` and also set `BootstrapAdminEmail = 'admin@localhost'`, the installer will create `admin@localhost`. If you want the login to be `admin@quizapi.local`, set that email explicitly before running the installer.
+If you leave `PublicBaseUrl = 'http://localhost'` and also set `BootstrapAdminEmail = 'admin@localhost'`, the installer will create `admin@localhost`. If you want the login to be `admin@thecertmaster.local`, set that email explicitly before running the installer.
 
 Default installation assumptions:
 
 - IIS site name: `Default Web Site`
-- application pool name: `QuizAPI`
+- application pool name: `TheCertMaster`
 - SQL instance: `.\SQLEXPRESS`
-- database name: `QuizAPI`
+- database name: `TheCertMaster`
 - deployment root: `C:\Deployment`
 
 If your production host needs different names or paths, override the script parameters.
@@ -201,7 +201,7 @@ If your production host needs different names or paths, override the script para
 
 - verify the Windows SMTP service is installed
 - start `IISADMIN` and `SMTPSVC` if needed
-- write `C:\Deployment\publish\App_Data\smtp_settings.json` for QuizAPI
+- write `C:\Deployment\publish\App_Data\smtp_settings.json` for TheCertMaster
 - default the sender address from `PublicBaseUrl` when a settings file is present
 - optionally send a direct SMTP test email
 
@@ -217,7 +217,7 @@ powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smt
 
 How sender defaults are chosen:
 
-- if `production-settings.psd1` exists and `PublicBaseUrl = 'http://quizapi.local'`, the script defaults `FromEmail` to `no-reply@quizapi.local`
+- if `production-settings.psd1` exists and `PublicBaseUrl = 'http://thecertmaster.local'`, the script defaults `FromEmail` to `no-reply@thecertmaster.local`
 - if no host can be derived, it falls back to `BootstrapAdminEmail`
 - if neither is available, it falls back to `no-reply@localhost`
 
@@ -225,14 +225,14 @@ This keeps SMTP testing aligned with the same hostname pattern used by `PublicBa
 
 Important note about external email tests:
 
-- this script configures QuizAPI to talk to the local Windows SMTP service
+- this script configures TheCertMaster to talk to the local Windows SMTP service
 - it does not fully configure Windows SMTP relay rules, smart-host routing, or outbound mail policy for your network
 - sending to an external address such as Gmail can still fail if the server cannot relay outbound mail on port `25`
 - on our server test, Windows SMTP accepted configuration but `inetinfo.exe` crashed inside `SMTPSVC.dll` during send attempts, so local Windows SMTP should be treated as optional testing infrastructure, not the preferred production delivery path
 
 So a successful script run means:
 
-- QuizAPI now has SMTP settings written for application testing
+- TheCertMaster now has SMTP settings written for application testing
 - the Windows SMTP service is installed and running
 
 It does not automatically guarantee:
@@ -259,7 +259,7 @@ powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smt
   -Password 'your-real-password-or-app-password' `
   -UseStartTls:$true `
   -FromEmail your-real-mailbox@yourdomain.com `
-  -FromName 'QuizAPI' `
+  -FromName 'TheCertMaster' `
   -TestRecipientEmail you@example.com
 ```
 

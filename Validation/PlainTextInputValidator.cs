@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace QuizAPI.Validation
+namespace TheCertMaster.Validation
 {
     public static class PlainTextInputValidator
     {

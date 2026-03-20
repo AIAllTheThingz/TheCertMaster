@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace QuizAPI.Models
+namespace TheCertMaster.Models
 {
     public class Quiz
     {

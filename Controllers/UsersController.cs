@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using QuizAPI.Models;
-using QuizAPI.Services;
+using TheCertMaster.Models;
+using TheCertMaster.Services;
 using System.Text;
-using QuizAPI.Validation;
+using TheCertMaster.Validation;
 
-namespace QuizAPI.Controllers
+namespace TheCertMaster.Controllers
 {
     [ApiController]
     [Route("api/users")]

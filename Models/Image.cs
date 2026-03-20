@@ -1,4 +1,4 @@
-namespace QuizAPI.Models
+namespace TheCertMaster.Models
 {
     public class Image
     {
@@ -8,7 +8,7 @@ namespace QuizAPI.Models
         public string FileName { get; set; } = string.Empty;
         public string ContentType { get; set; } = string.Empty;
 
-        // Store a link (saved under wwwroot/uploads) — simple & web-friendly
+        // Store a link (saved under wwwroot/uploads) ï¿½ simple & web-friendly
         public string Url { get; set; } = string.Empty;
     }
 }

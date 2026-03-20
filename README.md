@@ -1,6 +1,6 @@
-# QuizAPI
+# TheCertMaster
 
-`QuizAPI` is a .NET 9 quiz platform for building, importing, managing, and taking quizzes through both API endpoints and simple browser-based pages.
+`TheCertMaster` is a .NET 9 quiz platform for building, importing, managing, and taking quizzes through both API endpoints and simple browser-based pages.
 
 This repository is the active source-of-truth application for the project.
 
@@ -81,7 +81,7 @@ On startup in `Development`, the app will:
 
 ### Default Development Admin
 
-- email: `admin@quizapi.local`
+- email: `admin@thecertmaster.local`
 - password: `Admin@123`
 
 You should change these for any shared or non-local environment.
@@ -282,7 +282,7 @@ dotnet build
 - [prepare-production.ps1](scripts/prepare-production.ps1): publish a release build and generate a production env template
 - [ensure-server-prerequisites.ps1](scripts/ensure-server-prerequisites.ps1): install IIS features, .NET 9, hosting bundle, and EF tools on a bare Windows server
 - [install-production-application.ps1](scripts/install-production-application.ps1): publish, configure IIS, run migrations, and create the bootstrap admin on the target server
-- [configure-smtp-test.ps1](scripts/configure-smtp-test.ps1): write SMTP settings for QuizAPI and test mail delivery
+- [configure-smtp-test.ps1](scripts/configure-smtp-test.ps1): write SMTP settings for TheCertMaster and test mail delivery
 - [post-deploy-smoke-test.ps1](scripts/post-deploy-smoke-test.ps1): verify landing page, health endpoints, and version endpoint after deployment
 - [appsettings.Production.template.json](appsettings.Production.template.json): production configuration reference
 
@@ -310,6 +310,6 @@ Remote:
 
 ## Notes
 
-- `QuizAPI` is the maintained application going forward.
+- `TheCertMaster` is the maintained application going forward.
 - A public sample quiz package is included for demo and onboarding purposes.
 - The repository is designed for local development, technical preview use, and continued hardening toward beta.

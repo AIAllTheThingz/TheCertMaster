@@ -8,11 +8,11 @@ using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using QuizAPI.Models;
-using QuizAPI.Services;
-using QuizAPI.Validation;
+using TheCertMaster.Models;
+using TheCertMaster.Services;
+using TheCertMaster.Validation;
 
-namespace QuizAPI.Controllers
+namespace TheCertMaster.Controllers
 {
     [ApiController]
     [Route("api/auth")]

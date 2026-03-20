@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using QuizAPI.Data;
-using QuizAPI.Models;
+using TheCertMaster.Data;
+using TheCertMaster.Models;
 
 static string? GetArgument(string[] args, string name)
 {

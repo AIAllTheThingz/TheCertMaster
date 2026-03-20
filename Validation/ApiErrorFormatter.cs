@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace QuizAPI.Validation
+namespace TheCertMaster.Validation
 {
     public static class ApiErrorFormatter
     {

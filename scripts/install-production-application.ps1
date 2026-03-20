@@ -6,14 +6,14 @@ param(
     [string]$SettingsFile = '',
     [string]$DeploymentRoot = 'C:\Deployment',
     [string]$SiteName = 'Default Web Site',
-    [string]$AppPoolName = 'QuizAPI',
+    [string]$AppPoolName = 'TheCertMaster',
     [int]$HttpPort = 80,
     [int]$HttpsPort = 443,
     [string]$HostName = '',
     [string]$CertificateThumbprint = '',
     [switch]$CreateSelfSignedCertificate,
     [string]$SqlInstance = '.\SQLEXPRESS',
-    [string]$DatabaseName = 'QuizAPI',
+    [string]$DatabaseName = 'TheCertMaster',
     [string]$ConnectionString = '',
     [string]$PublicBaseUrl = '',
     [string]$JwtKey = '',
@@ -79,13 +79,13 @@ function Get-SourceRoot {
             continue
         }
 
-        $projectPath = Join-Path $candidate 'QuizAPI.csproj'
+        $projectPath = Join-Path $candidate 'TheCertMaster.csproj'
         if (Test-Path -LiteralPath $projectPath) {
             return $candidate
         }
     }
 
-    throw "Could not locate QuizAPI.csproj. Copy the application source into the Deployment package before running this installer."
+    throw "Could not locate TheCertMaster.csproj. Copy the application source into the Deployment package before running this installer."
 }
 
 function Ensure-DotNetInstalled {
@@ -123,7 +123,7 @@ function Invoke-BootstrapAdminTool {
         return
     }
 
-    & $DotNetExe run --project (Join-Path $SourceRoot 'QuizAPI.Bootstrapper\QuizAPI.Bootstrapper.csproj') -- `
+    & $DotNetExe run --project (Join-Path $SourceRoot 'TheCertMaster.Bootstrapper\TheCertMaster.Bootstrapper.csproj') -- `
         --connection $ConnectionStringToUse `
         --email $Email `
         --password $Password `
@@ -154,7 +154,7 @@ function Publish-Application {
     )
 
     Ensure-Directory -Path $PublishPath
-    & $DotNetExe publish (Join-Path $SourceRoot 'QuizAPI.csproj') -c Release -o $PublishPath
+    & $DotNetExe publish (Join-Path $SourceRoot 'TheCertMaster.csproj') -c Release -o $PublishPath
     if ($LASTEXITCODE -ne 0) {
         throw 'dotnet publish failed.'
     }
@@ -244,7 +244,7 @@ function Ensure-HttpsCertificate {
     $cert = New-SelfSignedCertificate `
         -DnsName $DnsName `
         -CertStoreLocation 'Cert:\LocalMachine\My' `
-        -FriendlyName "QuizAPI HTTPS ($DnsName)" `
+        -FriendlyName "TheCertMaster HTTPS ($DnsName)" `
         -NotAfter (Get-Date).AddYears(2)
 
     return $cert.Thumbprint
@@ -579,7 +579,7 @@ try {
     $env:Jwt__Issuer = $JwtIssuer
     $env:Jwt__Audience = $JwtAudience
     $env:PublicApp__BaseUrl = $PublicBaseUrl.TrimEnd('/')
-    & $dotnetEfExe database update --project (Join-Path $sourceRoot 'QuizAPI.csproj') --startup-project (Join-Path $sourceRoot 'QuizAPI.csproj')
+    & $dotnetEfExe database update --project (Join-Path $sourceRoot 'TheCertMaster.csproj') --startup-project (Join-Path $sourceRoot 'TheCertMaster.csproj')
     if ($LASTEXITCODE -ne 0) {
         throw 'dotnet ef database update failed.'
     }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
-namespace QuizAPI.Controllers
+namespace TheCertMaster.Controllers
 {
     [ApiController]
     [Route("api/files")]

@@ -18,9 +18,9 @@ using Microsoft.AspNetCore.RateLimiting;
 using System.Text;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
-using QuizAPI.Data;
-using QuizAPI.Models;
-using QuizAPI.Services;
+using TheCertMaster.Data;
+using TheCertMaster.Models;
+using TheCertMaster.Services;
 using System.Diagnostics;
 using System.Text.Json;
 
@@ -74,7 +74,7 @@ Directory.CreateDirectory(keysPath);
 var dataProtection = builder.Services
     .AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
-    .SetApplicationName("QuizAPI");
+    .SetApplicationName("TheCertMaster");
 
 if (OperatingSystem.IsWindows())
 {
@@ -419,7 +419,7 @@ app.MapGet("/version", (IHostEnvironment environment) =>
 
     return Results.Ok(new
     {
-        application = assembly.Name ?? "QuizAPI",
+        application = assembly.Name ?? "TheCertMaster",
         version = informationalVersion,
         environment = environment.EnvironmentName,
         utc = DateTime.UtcNow
@@ -534,7 +534,7 @@ using (var scope = app.Services.CreateScope())
 
     if (app.Environment.IsDevelopment())
     {
-        var devAdminEmail = configuration["DevAdmin:Email"] ?? "admin@quizapi.local";
+        var devAdminEmail = configuration["DevAdmin:Email"] ?? "admin@thecertmaster.local";
         var devAdminPassword = configuration["DevAdmin:Password"] ?? "Admin@123";
 
         var devAdminUser = await userManager.FindByEmailAsync(devAdminEmail);
@@ -574,7 +574,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 startupLogger.LogInformation(
-    "QuizAPI started in {Environment}. SwaggerEnabled={SwaggerEnabled}. HttpsRedirectionEnabled={HttpsRedirectionEnabled}. BaseUrl={BaseUrl}. Health endpoints: /health/live, /health/ready, /health",
+    "TheCertMaster started in {Environment}. SwaggerEnabled={SwaggerEnabled}. HttpsRedirectionEnabled={HttpsRedirectionEnabled}. BaseUrl={BaseUrl}. Health endpoints: /health/live, /health/ready, /health",
     app.Environment.EnvironmentName,
     swaggerEnabled,
     httpsRedirectionEnabled,

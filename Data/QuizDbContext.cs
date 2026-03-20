@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using QuizAPI.Models;
+using TheCertMaster.Models;
 
-namespace QuizAPI.Data
+namespace TheCertMaster.Data
 {
     public class QuizDbContext : IdentityDbContext<ApplicationUser>
     {

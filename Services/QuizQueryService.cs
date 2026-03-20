@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using QuizAPI.Data;
-using QuizAPI.DTO;
-using QuizAPI.Models;
+using TheCertMaster.Data;
+using TheCertMaster.DTO;
+using TheCertMaster.Models;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace QuizAPI.Services
+namespace TheCertMaster.Services
 {
     public class QuizQueryService
     {

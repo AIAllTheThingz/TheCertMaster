@@ -10,7 +10,7 @@ param(
     [string]$Username = '',
     [string]$Password = '',
     [string]$FromEmail = '',
-    [string]$FromName = 'QuizAPI',
+    [string]$FromName = 'TheCertMaster',
     [string]$TestRecipientEmail = ''
 )
 
@@ -115,7 +115,7 @@ if ($settings) {
     }
 
     if ([string]::IsNullOrWhiteSpace($FromName) -and $settings.ContainsKey('BootstrapAdminFirstName')) {
-        $FromName = "$($settings.BootstrapAdminFirstName) QuizAPI".Trim()
+        $FromName = "$($settings.BootstrapAdminFirstName) TheCertMaster".Trim()
     }
 }
 
@@ -151,7 +151,7 @@ Write-Step "Starting SMTP services"
 Ensure-ServiceIsRunning -Name 'IISADMIN'
 Ensure-ServiceIsRunning -Name 'SMTPSVC'
 
-Write-Step "Writing QuizAPI SMTP settings for application testing"
+Write-Step "Writing TheCertMaster SMTP settings for application testing"
 New-Item -ItemType Directory -Path $appDataPath -Force | Out-Null
 
 $payload = [ordered]@{
@@ -179,8 +179,8 @@ if (-not [string]::IsNullOrWhiteSpace($TestRecipientEmail)) {
     $mailMessage = New-Object System.Net.Mail.MailMessage
     $mailMessage.From = New-Object System.Net.Mail.MailAddress($FromEmail, $FromName)
     [void]$mailMessage.To.Add($TestRecipientEmail)
-    $mailMessage.Subject = 'QuizAPI SMTP Test'
-    $mailMessage.Body = 'This is a test email from the QuizAPI deployment SMTP test script.'
+    $mailMessage.Subject = 'TheCertMaster SMTP Test'
+    $mailMessage.Body = 'This is a test email from the TheCertMaster deployment SMTP test script.'
 
     $smtpClient = New-Object System.Net.Mail.SmtpClient($SmtpHost, $SmtpPort)
     $smtpClient.EnableSsl = $UseSsl

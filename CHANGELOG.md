@@ -50,7 +50,7 @@ The format is based on Keep a Changelog, and this project follows semantic-style
 
 ### Removed
 
-- Pre-employment quiz feature and related static pages from `DevQuizAPI`
+- Pre-employment quiz feature and related static pages from `TheCertMaster`
 
 ### Fixed
 
@@ -60,4 +60,4 @@ The format is based on Keep a Changelog, and this project follows semantic-style
 - Uploaded ZIP visibility in the admin file list
 - Landing page routing and root-path navigation issues
 
-[v0.1.0-alpha]: https://github.com/mezuccolini/QuizAPI/releases/tag/v0.1.0-alpha
+[v0.1.0-alpha]: https://github.com/AIAllTheThingz/TheCertMaster/releases/tag/v0.1.0-alpha

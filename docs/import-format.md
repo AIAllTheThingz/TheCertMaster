@@ -1,6 +1,6 @@
 # Import Format
 
-This document describes the supported quiz import formats for `DevQuizAPI`.
+This document describes the supported quiz import formats for `TheCertMaster`.
 
 ## Supported Upload Types
 

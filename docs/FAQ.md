@@ -10,7 +10,7 @@ For local development, the application creates and migrates the development data
 
 In local development, the default seeded admin credentials are:
 
-- email: `admin@quizapi.local`
+- email: `admin@thecertmaster.local`
 - password: `Admin@123`
 
 These are for local development only and should be changed for any shared environment.

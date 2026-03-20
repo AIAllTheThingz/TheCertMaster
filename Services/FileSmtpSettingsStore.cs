@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using System.Text.Json;
 
-namespace QuizAPI.Services
+namespace TheCertMaster.Services
 {
     public interface ISmtpSettingsStore
     {
@@ -26,7 +26,7 @@ namespace QuizAPI.Services
             public string Password { get; set; } = "";
             public string ProtectedPassword { get; set; } = "";
             public string FromEmail { get; set; } = "";
-            public string FromName { get; set; } = "QuizAPI";
+            public string FromName { get; set; } = "TheCertMaster";
         }
 
         public FileSmtpSettingsStore(IConfiguration config, IWebHostEnvironment env, IDataProtectionProvider dataProtectionProvider)
@@ -38,7 +38,7 @@ namespace QuizAPI.Services
                 section.Bind(_defaults);
             }
 
-            _protector = dataProtectionProvider.CreateProtector("QuizAPI.SmtpSettings.Password.v1");
+            _protector = dataProtectionProvider.CreateProtector("TheCertMaster.SmtpSettings.Password.v1");
 
             var appData = Path.Combine(env.ContentRootPath, "App_Data");
             Directory.CreateDirectory(appData);

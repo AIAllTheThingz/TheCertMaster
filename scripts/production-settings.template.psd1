@@ -2,7 +2,7 @@
     DeploymentRoot = 'C:\Deployment'
 
     SiteName = 'Default Web Site'
-    AppPoolName = 'QuizAPI'
+    AppPoolName = 'TheCertMaster'
     HttpPort = 80
     HttpsPort = 443
 
@@ -14,26 +14,26 @@
     CreateSelfSignedCertificate = $true
 
     SqlInstance = '.\SQLEXPRESS'
-    DatabaseName = 'QuizAPI'
+    DatabaseName = 'TheCertMaster'
 
     # Leave blank to let the installer build a local SQL Express connection string
     ConnectionString = ''
 
-    PublicBaseUrl = 'http://quizapi.local'
+    PublicBaseUrl = 'http://thecertmaster.local'
 
     # Replace with a long random secret before production use
     JwtKey = 'REPLACE-WITH-A-LONG-RANDOM-SECRET-AT-LEAST-32-CHARS'
     JwtIssuer = 'TheCertMaster'
     JwtAudience = 'TheCertMasterUsers'
 
-    BootstrapAdminEmail = 'admin@quizapi.local'
+    BootstrapAdminEmail = 'admin@thecertmaster.local'
     BootstrapAdminPassword = 'REPLACE-WITH-A-STRONG-ADMIN-PASSWORD'
     BootstrapAdminFirstName = 'Server'
     BootstrapAdminLastName = 'Admin'
 
     CorsOrigins = @(
-        'http://quizapi.local',
-        'https://quizapi.local'
+        'http://thecertmaster.local',
+        'https://thecertmaster.local'
     )
 
     AuthAttemptsPerMinute = 8

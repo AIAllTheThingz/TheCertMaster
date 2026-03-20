@@ -9,17 +9,17 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using QuizAPI.Data;
-using QuizAPI.Models;
-using QuizAPI.Services;
+using TheCertMaster.Data;
+using TheCertMaster.Models;
+using TheCertMaster.Services;
 using Xunit;
 
-namespace QuizAPI.Tests;
+namespace TheCertMaster.Tests;
 
-public class QuizApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly FakeEmailService _fakeEmailService = new();
-    private readonly string _databaseName = $"QuizApiTests_{Guid.NewGuid():N}";
+    private readonly string _databaseName = $"TheCertMasterTests_{Guid.NewGuid():N}";
     private readonly IDictionary<string, string?>? _overrides;
     private string ConnectionString
     {
@@ -44,22 +44,22 @@ public class QuizApiWebApplicationFactory : WebApplicationFactory<Program>, IAsy
         }
     }
 
-    public QuizApiWebApplicationFactory()
+    public TheCertMasterWebApplicationFactory()
         : this(null)
     {
     }
 
-    private QuizApiWebApplicationFactory(IDictionary<string, string?>? overrides)
+    private TheCertMasterWebApplicationFactory(IDictionary<string, string?>? overrides)
     {
         _overrides = overrides;
         Environment.SetEnvironmentVariable("Jwt__Key", "Integration_Test_Jwt_Key_123456789012345");
-        Environment.SetEnvironmentVariable("Jwt__Issuer", "QuizAPI-Tests");
-        Environment.SetEnvironmentVariable("Jwt__Audience", "QuizAPI-Tests-Users");
+        Environment.SetEnvironmentVariable("Jwt__Issuer", "TheCertMaster-Tests");
+        Environment.SetEnvironmentVariable("Jwt__Audience", "TheCertMaster-Tests-Users");
         Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", ConnectionString);
         Environment.SetEnvironmentVariable("SampleData__Enabled", "false");
     }
 
-    public static QuizApiWebApplicationFactory CreateWithOverrides(IDictionary<string, string?> overrides)
+    public static TheCertMasterWebApplicationFactory CreateWithOverrides(IDictionary<string, string?> overrides)
         => new(overrides);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -109,7 +109,7 @@ public class QuizApiWebApplicationFactory : WebApplicationFactory<Program>, IAsy
     {
         using var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["email"] = "admin@quizapi.local",
+            ["email"] = "admin@thecertmaster.local",
             ["password"] = "Admin@123"
         });
 
@@ -157,7 +157,7 @@ public class QuizApiWebApplicationFactory : WebApplicationFactory<Program>, IAsy
             }
         }
 
-        var adminEmail = "admin@quizapi.local";
+        var adminEmail = "admin@thecertmaster.local";
         var existingUser = await userManager.FindByEmailAsync(adminEmail);
         if (existingUser == null)
         {

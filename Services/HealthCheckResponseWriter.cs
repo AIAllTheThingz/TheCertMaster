@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace QuizAPI.Services;
+namespace TheCertMaster.Services;
 
 public static class HealthCheckResponseWriter
 {

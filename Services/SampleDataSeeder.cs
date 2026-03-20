@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using QuizAPI.Data;
-using QuizAPI.Models;
+using TheCertMaster.Data;
+using TheCertMaster.Models;
 
-namespace QuizAPI.Services
+namespace TheCertMaster.Services
 {
     public class SampleDataSeeder
     {

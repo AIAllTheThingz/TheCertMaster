@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace QuizAPI.Models
+namespace TheCertMaster.Models
 {
     public class ApplicationUser : IdentityUser
     {

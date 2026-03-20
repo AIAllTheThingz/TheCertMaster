@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\QuizAPI.csproj" />
+    <ProjectReference Include="..\TheCertMaster.csproj" />
   </ItemGroup>
 
 </Project>

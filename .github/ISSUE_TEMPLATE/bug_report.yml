@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a problem with DevQuizAPI behavior, setup, import, or UI flow.
+description: Report a problem with TheCertMaster behavior, setup, import, or UI flow.
 title: "[Bug]: "
 labels:
   - bug

@@ -7,18 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="QuizAPI.Bootstrapper\**\*.cs" />
-    <Compile Remove="QuizAPI_Source_Code\**\*.cs" />
-    <Compile Remove="QuizAPI.Tests\**\*.cs" />
-    <Content Remove="QuizAPI.Bootstrapper\**" />
-    <Content Remove="QuizAPI_Source_Code\**" />
-    <Content Remove="QuizAPI.Tests\**" />
-    <EmbeddedResource Remove="QuizAPI.Bootstrapper\**" />
-    <EmbeddedResource Remove="QuizAPI_Source_Code\**" />
-    <EmbeddedResource Remove="QuizAPI.Tests\**" />
-    <None Remove="QuizAPI.Bootstrapper\**" />
-    <None Remove="QuizAPI_Source_Code\**" />
-    <None Remove="QuizAPI.Tests\**" />
+    <Compile Remove="TheCertMaster.Bootstrapper\**\*.cs" />
+    <Compile Remove="TheCertMaster_Source_Code\**\*.cs" />
+    <Compile Remove="TheCertMaster.Tests\**\*.cs" />
+    <Content Remove="TheCertMaster.Bootstrapper\**" />
+    <Content Remove="TheCertMaster_Source_Code\**" />
+    <Content Remove="TheCertMaster.Tests\**" />
+    <EmbeddedResource Remove="TheCertMaster.Bootstrapper\**" />
+    <EmbeddedResource Remove="TheCertMaster_Source_Code\**" />
+    <EmbeddedResource Remove="TheCertMaster.Tests\**" />
+    <None Remove="TheCertMaster.Bootstrapper\**" />
+    <None Remove="TheCertMaster_Source_Code\**" />
+    <None Remove="TheCertMaster.Tests\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuizAPI.Data;
+using TheCertMaster.Data;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace QuizAPI.Controllers
+namespace TheCertMaster.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

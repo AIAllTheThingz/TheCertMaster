@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using QuizAPI.Data;
+using TheCertMaster.Data;
 
 #nullable disable
 
-namespace QuizAPI.Migrations
+namespace TheCertMaster.Migrations
 {
     [DbContext(typeof(QuizDbContext))]
     [Migration("20251230160000_AddQuizCategory")]
