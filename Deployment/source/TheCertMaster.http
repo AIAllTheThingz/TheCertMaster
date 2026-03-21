@@ -1,0 +1,6 @@
+@TheCertMaster_HostAddress = http://localhost:5085
+
+GET {{TheCertMaster_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

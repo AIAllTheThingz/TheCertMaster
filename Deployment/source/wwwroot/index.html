@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>TheCertMaster</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #d3d6db;
+            --bg-soft: #e8eaed;
+            --panel: rgba(211, 214, 219, 0.9);
+            --panel-strong: #eef0f3;
+            --text: #303841;
+            --muted: #3a4750;
+            --accent: #be3144;
+            --accent-hover: #9f2638;
+            --accent-soft: rgba(190, 49, 68, 0.14);
+            --highlight: #be3144;
+            --highlight-soft: rgba(190, 49, 68, 0.12);
+            --border: rgba(48, 56, 65, 0.16);
+            --shadow: rgba(48, 56, 65, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(190, 49, 68, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(58, 71, 80, 0.24), transparent 26%),
+                linear-gradient(180deg, #dfe2e6 0%, var(--bg) 52%, #c5c9cf 100%);
+            color: var(--text);
+        }
+
+        main {
+            position: relative;
+            width: min(1288px, calc(100vw - 2rem));
+            margin: 0 auto;
+            padding: 2.4rem 0 4.5rem;
+        }
+
+        .top-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            padding: 0.95rem 1rem;
+            background: rgba(232, 234, 237, 0.82);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 18px 36px rgba(48, 56, 65, 0.12);
+            backdrop-filter: blur(10px);
+        }
+
+        .top-links-label {
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-right: 0.2rem;
+        }
+
+        .top-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(48, 56, 65, 0.14);
+            background: rgba(238, 240, 243, 0.82);
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+        }
+
+        .top-link:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.98);
+            border-color: rgba(190, 49, 68, 0.28);
+        }
+
+        main::before,
+        main::after {
+            content: "";
+            position: absolute;
+            inset: auto;
+            border-radius: 999px;
+            pointer-events: none;
+            filter: blur(10px);
+            opacity: 0.7;
+        }
+
+        main::before {
+            top: 3rem;
+            right: 0;
+            width: 180px;
+            height: 180px;
+            background: rgba(190, 49, 68, 0.16);
+        }
+
+        main::after {
+            top: 22rem;
+            left: -2rem;
+            width: 220px;
+            height: 220px;
+            background: rgba(58, 71, 80, 0.14);
+        }
+
+        .hero,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            box-shadow: 0 26px 54px var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(322px, 1.09fr);
+            gap: 1.6rem;
+            padding: 2rem;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 0.45rem 0.9rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2.4rem, 4.4vw, 4.35rem);
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+
+        .lead {
+            margin-top: 1rem;
+            font-size: 1.08rem;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-side {
+            display: grid;
+            gap: 1rem;
+            align-content: start;
+        }
+
+        .side-card {
+            background: linear-gradient(180deg, rgba(238, 240, 243, 0.92), rgba(226, 229, 233, 0.98));
+            border: 1px solid rgba(48, 56, 65, 0.1);
+            border-radius: 22px;
+            padding: 1.2rem 1.25rem;
+        }
+
+        .side-card h2 {
+            margin: 0 0 0.6rem;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.55rem;
+            color: var(--accent);
+        }
+
+        .side-card p,
+        .side-card li {
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .side-card ul {
+            margin-top: 0.7rem;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.9rem;
+            margin-top: 1.8rem;
+        }
+
+        .button,
+        .button-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 219px;
+            padding: 0.95rem 1.2rem;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        .button {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 12px 22px rgba(190, 49, 68, 0.22);
+        }
+
+        .button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .button-secondary {
+            border: 1px solid var(--border);
+            color: var(--text);
+            background: rgba(232, 234, 237, 0.74);
+        }
+
+        .button-secondary:hover {
+            background: rgba(255, 255, 255, 0.98);
+            transform: translateY(-1px);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(299px, 1fr));
+            gap: 1.15rem;
+            margin-top: 1.45rem;
+        }
+
+        .panel {
+            padding: 1.45rem;
+        }
+
+        .panel h2,
+        .panel h3 {
+            margin-top: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.4rem;
+        }
+
+        .panel p,
+        .panel li {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        ul {
+            padding-left: 1.1rem;
+            margin-bottom: 0;
+        }
+
+        .feature-kicker {
+            display: inline-block;
+            margin-bottom: 0.75rem;
+            color: var(--highlight);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .footer-note {
+            margin-top: 1.35rem;
+            padding: 1.2rem 1.3rem;
+            border-left: 4px solid var(--highlight);
+            background: linear-gradient(90deg, rgba(190, 49, 68, 0.12), rgba(232, 234, 237, 0.92));
+            color: var(--text);
+            border-radius: 18px;
+        }
+
+        .footer-note strong {
+            color: var(--accent);
+        }
+
+        @media (max-width: 860px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            main {
+                width: min(100%, calc(100vw - 1.1rem));
+                padding-top: 1.2rem;
+            }
+
+            .hero,
+            .panel {
+                border-radius: 22px;
+            }
+
+            .hero {
+                padding: 1.3rem;
+            }
+
+            .panel {
+                padding: 1.15rem;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .button,
+            .button-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <nav class="top-links" aria-label="Site pages">
+            <span class="top-links-label">Pages</span>
+            <a class="top-link" href="/account.html" data-nav="/account.html">Account</a>
+            <a class="top-link" href="/quiz.html" data-nav="/quiz.html">Quiz</a>
+            <a class="top-link" href="/register.html" data-nav="/register.html">Register</a>
+            <a class="top-link" href="/result-home.html" data-nav="/result-home.html">Results</a>
+            <a class="top-link" href="/verify-email.html" data-nav="/verify-email.html">Verify Email</a>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="eyebrow">TheCertMaster</div>
+                <h1>Train for high-stakes technical exams with a sharper, more realistic practice flow.</h1>
+                <p class="lead">
+                    TheCertMaster is built to help learners pursue educational excellence through certification-style quiz
+                    sessions, structured review, and practical exam preparation that mirrors real-world IT testing patterns.
+                </p>
+                <p class="lead" style="margin-top: 0.35rem; color: var(--accent); font-weight: 700;">
+                </p>
+
+                <div class="actions">
+                    <a class="button" href="/quiz.html" data-nav="/quiz.html">Start Practicing</a>
+                    <a class="button-secondary" href="/account.html" data-nav="/account.html">My Account</a>
+                    <a class="button-secondary" href="/register.html" data-nav="/register.html">Create Account</a>
+                </div>
+            </div>
+
+            <div class="hero-side">
+                <div class="side-card">
+                    <h2>Built for serious practice</h2>
+                    <p>
+                        TheCertMaster is designed to support structured preparation for technical certifications through
+                        clean quiz delivery, repeatable review, and curated question content.
+                    </p>
+                </div>
+                <div class="side-card">
+                    <h2>What you can do here</h2>
+                    <ul>
+                        <li>Launch into the quiz runner and work through available exams by category.</li>
+                        <li>Sign in to the admin dashboard to upload, import, and manage quiz content.</li>
+                        <li>Use the same platform for practice sessions, content review, and ongoing updates.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="panel">
+                <div class="feature-kicker">Why It Works</div>
+                <h3>What This App Supports</h3>
+                <ul>
+                    <li>Practice quizzes modeled after real-world IT certification exam patterns.</li>
+                    <li>Category-based quiz data that can be imported and managed through the admin tools.</li>
+                    <li>Browser-based quiz running, scoring, and review workflows.</li>
+                </ul>
+            </article>
+
+            <article class="panel">
+                <div class="feature-kicker">Learning Outcome</div>
+                <h3>Why It Matters</h3>
+                <ul>
+                    <li>Turns study material into active recall and timed decision-making.</li>
+                    <li>Helps reinforce networking, security, systems, and related certification topics.</li>
+                    <li>Gives users a practical way to prepare for technical exams with focused repetition.</li>
+                </ul>
+            </article>
+
+            <article class="panel">
+                <div class="feature-kicker">First Step</div>
+                <h3>Getting Started</h3>
+                <ul>
+                    <li>Use the quiz runner to take sample or imported quizzes.</li>
+                    <li>Use the admin panel to log in, upload quiz files, and manage content.</li>
+                    <li>Use Swagger for API testing and development workflows.</li>
+                </ul>
+            </article>
+        </section>
+
+        <div class="footer-note">
+            <strong>TheCertMaster</strong> is the active public-facing product experience for this platform.
+        </div>
+    </main>
+    <script>
+        document.querySelectorAll("[data-nav]").forEach((link) => {
+            link.addEventListener("click", (event) => {
+                event.preventDefault();
+                const target = link.getAttribute("data-nav");
+                if (target) {
+                    window.location.assign(target);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
