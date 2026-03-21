@@ -14,6 +14,60 @@ This repository now also includes two PowerShell 5.1 server-installation scripts
 
 Current deployment intent for this environment is to serve the app over both `http` and `https` during the transition from dev/test to production.
 
+## Server Sizing
+
+These are practical baseline recommendations for `Windows Server 2022 + IIS + SQL Server 2019` when the application and SQL Server are running on the same machine.
+
+### Minimum
+
+- `2 vCPU`
+- `8 GB RAM`
+- `80 GB SSD`
+- Windows Server 2022
+- IIS
+- SQL Server 2019 or SQL Server Express 2019
+
+This is suitable for a small internal deployment, technical preview, or light pilot use.
+
+### Recommended
+
+- `4 vCPU`
+- `16 GB RAM`
+- `120 GB SSD` or larger
+- Windows Server 2022
+- IIS
+- SQL Server 2019 Standard or better if growth is expected
+
+This is the preferred starting point for a more realistic beta or early production deployment.
+
+### Production Growth
+
+- `4-8 vCPU`
+- `16-32 GB RAM`
+- `200 GB+ SSD` with room for database growth, uploads, logs, and backups
+- consider separating SQL Server from the web server as usage grows
+- use SQL Server Standard or higher when Express limits become restrictive
+
+Growth pressure will come more from SQL Server, uploads, quiz history, and operational storage than from the ASP.NET Core application binaries themselves.
+
+## Repository Deployment Bundle
+
+The repository now ships a tracked deployment bundle at [Deployment](Deployment).
+
+Use these bundle assets when preparing a server:
+
+- [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip): the upload-ready archive for a clean server
+- [Deployment\scripts](Deployment/scripts): packaged copies of the install and verification scripts
+- [Deployment\source](Deployment/source): packaged source tree for on-server publish and EF migration execution
+
+Recommended handling:
+
+1. Copy [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip) to the target server
+2. Extract it so the server ends up with `C:\Deployment\scripts` and `C:\Deployment\source`
+3. Run the packaged scripts from `C:\Deployment\scripts`
+
+For deployment servers, prefer this package flow instead of installing Git and cloning the repository directly onto the server.
+
 ## Required Production Configuration
 
 Do not rely on checked-in `appsettings.json` values for production.
