@@ -37,6 +37,28 @@ This repository is the active source-of-truth application for the project.
 - [Services](Services): quiz import, query, SMTP, sample data seeding
 - [Migrations](Migrations): database schema history
 - [wwwroot](wwwroot): static browser pages
+- [Deployment](Deployment): tracked deployment bundle with server scripts, mirrored source, and a ready-to-upload zip archive
+
+## Deployment Package
+
+This repository now includes a checked-in deployment bundle at [Deployment](Deployment).
+
+Bundle contents:
+
+- [Deployment\DEPLOYMENT.md](Deployment/DEPLOYMENT.md): operator-facing install guide
+- [Deployment\scripts](Deployment/scripts): prerequisite, install, SMTP, and smoke-test scripts
+- [Deployment\source](Deployment/source): mirrored application source for on-server publish and EF migration execution
+- [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip): upload-ready deployment archive
+
+Recommended server workflow:
+
+1. Copy [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip) to the target server
+2. Extract it to `C:\Deployment`
+3. Run [ensure-server-prerequisites.ps1](Deployment/scripts/ensure-server-prerequisites.ps1)
+4. Copy [production-settings.template.psd1](Deployment/scripts/production-settings.template.psd1) to `production-settings.psd1` and edit it
+5. Run [install-production-application.ps1](Deployment/scripts/install-production-application.ps1)
+6. Optionally run [configure-smtp-test.ps1](Deployment/scripts/configure-smtp-test.ps1)
+7. Run [post-deploy-smoke-test.ps1](Deployment/scripts/post-deploy-smoke-test.ps1)
 
 ## Local Development
 
@@ -285,6 +307,8 @@ dotnet build
 - [configure-smtp-test.ps1](scripts/configure-smtp-test.ps1): write SMTP settings for TheCertMaster and test mail delivery
 - [post-deploy-smoke-test.ps1](scripts/post-deploy-smoke-test.ps1): verify landing page, health endpoints, and version endpoint after deployment
 - [appsettings.Production.template.json](appsettings.Production.template.json): production configuration reference
+
+For server installs, prefer the packaged copies under [Deployment](Deployment) rather than cloning the repo onto the target server.
 
 ## Health Check
 
