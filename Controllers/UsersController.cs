@@ -43,6 +43,9 @@ namespace TheCertMaster.Controllers
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
+                var primaryRole = roles.Contains("Admin", StringComparer.OrdinalIgnoreCase)
+                    ? "Admin"
+                    : roles.FirstOrDefault() ?? "User";
                 result.Add(new
                 {
                     id = user.Id,
@@ -50,7 +53,7 @@ namespace TheCertMaster.Controllers
                     userName = user.UserName ?? user.Email ?? string.Empty,
                     firstName = user.FirstName,
                     lastName = user.LastName,
-                    role = roles.FirstOrDefault() ?? "User"
+                    role = primaryRole
                 });
             }
 

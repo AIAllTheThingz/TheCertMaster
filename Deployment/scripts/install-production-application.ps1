@@ -97,6 +97,19 @@ function Ensure-DotNetInstalled {
     return $dotnetExe
 }
 
+function Initialize-DotNetEnvironment {
+    param([string]$DotNetExe)
+
+    $dotnetRoot = Split-Path -Path $DotNetExe -Parent
+    $pathEntries = @($env:Path -split ';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    if ($pathEntries -notcontains $dotnetRoot) {
+        $env:Path = $dotnetRoot + ';' + ($pathEntries -join ';')
+    }
+
+    $env:DOTNET_ROOT = $dotnetRoot
+}
+
 function Ensure-DotNetEfInstalled {
     param([string]$DeploymentRootPath)
 
@@ -503,6 +516,7 @@ Write-Step 'Resolving source and tool locations'
 $sourceRoot = Get-SourceRoot -DeploymentRootPath $DeploymentRoot
 $publishPath = Join-Path $DeploymentRoot 'publish'
 $dotnetExe = Ensure-DotNetInstalled
+Initialize-DotNetEnvironment -DotNetExe $dotnetExe
 $dotnetEfExe = Ensure-DotNetEfInstalled -DeploymentRootPath $DeploymentRoot
 $appCmdExe = Ensure-IisModule
 

@@ -7,15 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Deployment\**\*.cs" />
     <Compile Remove="TheCertMaster.Bootstrapper\**\*.cs" />
     <Compile Remove="TheCertMaster_Source_Code\**\*.cs" />
     <Compile Remove="TheCertMaster.Tests\**\*.cs" />
+    <Content Remove="Deployment\**" />
     <Content Remove="TheCertMaster.Bootstrapper\**" />
     <Content Remove="TheCertMaster_Source_Code\**" />
     <Content Remove="TheCertMaster.Tests\**" />
+    <EmbeddedResource Remove="Deployment\**" />
     <EmbeddedResource Remove="TheCertMaster.Bootstrapper\**" />
     <EmbeddedResource Remove="TheCertMaster_Source_Code\**" />
     <EmbeddedResource Remove="TheCertMaster.Tests\**" />
+    <None Remove="Deployment\**" />
     <None Remove="TheCertMaster.Bootstrapper\**" />
     <None Remove="TheCertMaster_Source_Code\**" />
     <None Remove="TheCertMaster.Tests\**" />

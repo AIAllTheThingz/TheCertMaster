@@ -34,6 +34,9 @@ namespace TheCertMaster.Controllers
                 return Unauthorized();
 
             var roles = await _userManager.GetRolesAsync(user);
+            var primaryRole = roles.Contains("Admin", StringComparer.OrdinalIgnoreCase)
+                ? "Admin"
+                : roles.FirstOrDefault() ?? "User";
             var attempts = await _db.UserQuizAttempts
                 .AsNoTracking()
                 .Where(a => a.UserId == user.Id)
@@ -45,7 +48,7 @@ namespace TheCertMaster.Controllers
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 EmailConfirmed = user.EmailConfirmed,
-                Role = roles.FirstOrDefault() ?? "User",
+                Role = primaryRole,
                 TotalAttempts = attempts.Count,
                 PassedAttempts = attempts.Count(a => a.Passed),
                 FailedAttempts = attempts.Count(a => !a.Passed)
