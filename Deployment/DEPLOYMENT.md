@@ -68,6 +68,117 @@ Recommended handling:
 
 For deployment servers, prefer this package flow instead of installing Git and cloning the repository directly onto the server.
 
+## Simple Step-By-Step Install
+
+Step 1: Fresh install `Windows Server 2022` and fully patch it with Windows Update.
+
+Step 2: Open `Server Manager`.
+
+Step 3: Select `Add Roles and Features`.
+
+Step 4: Under `Server Roles`, select `Web Server (IIS)` and click `Next`.
+
+Step 5: Under `Features`, if `.NET Framework 3.5 Features` is requested, install it.
+If Windows asks for an alternate source, point it to:
+`D:\sources\sxs`
+Use your Windows Server 2022 ISO or media.
+
+Step 6: Finish the Roles and Features wizard and wait for IIS installation to complete.
+
+Step 7: Close `Add Roles and Features`.
+
+Step 8: Download and install `SQL Server Express 2019`.
+Official Microsoft page:
+[SQL Server 2019](https://www.microsoft.com/en-us/sql-server/sql-server-2019)
+Official Microsoft eval/download page:
+[SQL Server 2019 Eval Center](https://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019)
+
+Step 9: Download and install `SSMS`.
+Official Microsoft page:
+[SQL Server Management Studio](https://learn.microsoft.com/en-us/ssms/)
+Install page:
+[Download and install SSMS](https://learn.microsoft.com/en-us/ssms/install/install)
+
+Step 10: Copy [TheCertMaster-Deployment-Package.zip](TheCertMaster-Deployment-Package.zip) to the server.
+
+Step 11: Extract it to:
+`C:\Deployment`
+
+Step 12: Open:
+`C:\Deployment\scripts\production-settings.template.psd1`
+
+Step 13: Save it as:
+`C:\Deployment\scripts\production-settings.psd1`
+
+Step 14: Edit `production-settings.psd1` and set at minimum:
+- `PublicBaseUrl`
+- `JwtKey`
+- `BootstrapAdminEmail`
+- `BootstrapAdminPassword`
+- `CorsOrigins`
+
+Step 15: Open `PowerShell` as `Administrator`.
+
+Step 16: Run Script 1:
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\ensure-server-prerequisites.ps1
+```
+
+Step 17: Run Script 2:
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\install-production-application.ps1 -SettingsFile C:\Deployment\scripts\production-settings.psd1
+```
+
+Step 18: If SQL blocks database creation, open `SSMS` as a SQL admin and run:
+```sql
+USE master;
+GO
+CREATE DATABASE [TheCertMaster];
+GO
+```
+
+Step 19: If you had to run that SQL command, run Script 2 again:
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\install-production-application.ps1 -SettingsFile C:\Deployment\scripts\production-settings.psd1
+```
+
+Step 20: Optional SMTP setup:
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smtp-test.ps1 -DeploymentRoot C:\Deployment
+```
+
+Step 21: Run the smoke test:
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\post-deploy-smoke-test.ps1
+```
+
+Step 22: Open the site:
+[http://localhost/](http://localhost/)
+Admin page:
+[http://localhost/manage.html](http://localhost/manage.html)
+
+Scripts in order:
+1. `ensure-server-prerequisites.ps1`
+SQL command: none
+
+2. `install-production-application.ps1`
+SQL command: none if database creation succeeds automatically
+
+3. `CREATE DATABASE [TheCertMaster];`
+Only if Script 2 fails with `CREATE DATABASE permission denied`
+
+4. `install-production-application.ps1` again
+Only if you had to create the database manually
+
+5. `configure-smtp-test.ps1`
+Optional
+
+6. `post-deploy-smoke-test.ps1`
+Always recommended
+
+Important note:
+- I would not bundle the SQL Server or SSMS installers inside the deployment package unless you specifically want an offline install package. The current package is cleaner if it only contains TheCertMaster files and scripts.
+
 ## Required Production Configuration
 
 Do not rely on checked-in `appsettings.json` values for production.
