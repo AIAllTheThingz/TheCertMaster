@@ -83,6 +83,38 @@ function Ensure-ServiceIsRunning {
     }
 }
 
+function Ensure-SmtpFeatureInstalled {
+    if (-not (Get-Command Get-WindowsFeature -ErrorAction SilentlyContinue)) {
+        throw "Get-WindowsFeature is not available on this server. Install the Windows SMTP Server feature manually, then rerun this script."
+    }
+
+    $requiredFeatures = @(
+        'SMTP-Server',
+        'RSAT-SMTP',
+        'Web-Metabase',
+        'Web-Lgcy-Mgmt-Console',
+        'Web-WMI'
+    )
+
+    $featuresToInstall = @()
+    foreach ($featureName in $requiredFeatures) {
+        $feature = Get-WindowsFeature -Name $featureName -ErrorAction SilentlyContinue
+        if ($feature -and -not $feature.Installed) {
+            $featuresToInstall += $featureName
+        }
+    }
+
+    if ($featuresToInstall.Count -eq 0) {
+        return
+    }
+
+    Write-Step "Installing Windows SMTP feature and dependencies"
+    $installResult = Install-WindowsFeature -Name $featuresToInstall -IncludeManagementTools
+    if (-not $installResult.Success) {
+        throw "Failed to install required Windows features for SMTP: $($featuresToInstall -join ', ')"
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($PublishedSitePath)) {
     $PublishedSitePath = Join-Path $DeploymentRoot 'publish'
 }
@@ -133,18 +165,11 @@ $smtpSettingsPath = Join-Path $appDataPath 'smtp_settings.json'
 Write-Step "Checking SMTP service installation"
 $smtpService = Get-Service -Name 'SMTPSVC' -ErrorAction SilentlyContinue
 if (-not $smtpService) {
-    $featureName = 'SMTP-Server'
-    $featureStatus = $null
-
-    if (Get-Command Get-WindowsFeature -ErrorAction SilentlyContinue) {
-        $featureStatus = Get-WindowsFeature -Name $featureName -ErrorAction SilentlyContinue
+    Ensure-SmtpFeatureInstalled
+    $smtpService = Get-Service -Name 'SMTPSVC' -ErrorAction SilentlyContinue
+    if (-not $smtpService) {
+        throw "The SMTP service 'SMTPSVC' was not found after Windows SMTP feature installation."
     }
-
-    if ($featureStatus -and -not $featureStatus.Installed) {
-        throw "The Windows SMTP Server feature is not installed. Install it first or rerun the prerequisite workflow with SMTP enabled."
-    }
-
-    throw "The SMTP service 'SMTPSVC' was not found on this server."
 }
 
 Write-Step "Starting SMTP services"
