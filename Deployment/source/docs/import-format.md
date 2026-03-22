@@ -87,8 +87,23 @@ After import:
 ## ZIP Upload Workflow
 
 1. Upload the ZIP file in [manage.html](../wwwroot/manage.html).
-2. The server extracts the CSV and images.
-3. The admin page shows the extracted CSV file name.
-4. Import that extracted CSV into the database.
+2. The server validates the package structure before import.
+3. The server extracts the CSV and images.
+4. The extracted CSV is imported automatically into the database.
+5. The admin page shows the import summary, including imported counts and any package warnings.
 
-ZIP files themselves are not imported directly into the quiz tables. The extracted CSV is the import source of truth.
+ZIP packages are now imported in one step. The extracted CSV remains in private uploads as the package source-of-truth artifact for review and troubleshooting.
+
+## ZIP Validation Rules
+
+- the package must contain exactly one CSV file
+- that CSV must be at the ZIP root, not inside a nested folder
+- image file names must be unique by file name without extension
+- each `QuestionImgKey` must resolve to an extracted image file
+
+Examples of package validation failures:
+
+- multiple CSV files in one ZIP
+- CSV stored under `folder/quiz.csv`
+- duplicate image keys such as `router.png` and `router.jpg`
+- `QuestionImgKey` values that do not match any extracted image

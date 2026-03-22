@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mail;
 using TheCertMaster.Services;
 using TheCertMaster.Validation;
 
@@ -91,9 +92,27 @@ namespace TheCertMaster.Controllers
             if (req == null || string.IsNullOrWhiteSpace(req.ToEmail))
                 return BadRequest("ToEmail is required.");
 
-            await _email.SendAsync(req.ToEmail.Trim(), "TheCertMaster SMTP Test", "This is a test email from TheCertMaster.");
-            _logger.LogInformation("SMTP test email sent to {ToEmail}", req.ToEmail.Trim());
-            return Ok(new { message = "Test email sent." });
+            try
+            {
+                await _email.SendAsync(req.ToEmail.Trim(), "TheCertMaster SMTP Test", "This is a test email from TheCertMaster.");
+                _logger.LogInformation("SMTP test email sent to {ToEmail}", req.ToEmail.Trim());
+                return Ok(new { message = "Test email sent." });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "SMTP test failed because SMTP settings are incomplete.");
+                return BadRequest(ex.Message);
+            }
+            catch (SmtpException ex)
+            {
+                var detail = ex.InnerException?.Message;
+                var message = string.IsNullOrWhiteSpace(detail)
+                    ? $"SMTP test failed: {ex.Message}"
+                    : $"SMTP test failed: {ex.Message} Inner error: {detail}";
+
+                _logger.LogWarning(ex, "SMTP test failed for {ToEmail}", req.ToEmail.Trim());
+                return BadRequest(message);
+            }
         }
     }
 }

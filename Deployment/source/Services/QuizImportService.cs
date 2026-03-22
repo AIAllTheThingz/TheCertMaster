@@ -10,6 +10,21 @@ namespace TheCertMaster.Services
 {
     public class QuizImportService
     {
+        public sealed class PackageUploadResult
+        {
+            public string PackageId { get; set; } = "";
+            public string ZipFileName { get; set; } = "";
+            public string CsvFileName { get; set; } = "";
+            public string CsvEntry { get; set; } = "";
+            public string ImageBaseUrl { get; set; } = "";
+            public int ImagesSaved { get; set; }
+            public int QuizzesImported { get; set; }
+            public int QuestionsImported { get; set; }
+            public int AnswersImported { get; set; }
+            public string ImportMessage { get; set; } = "";
+            public IReadOnlyList<string> Warnings { get; set; } = Array.Empty<string>();
+        }
+
         private readonly IWebHostEnvironment _env;
         private readonly QuizDbContext _db;
 
@@ -29,6 +44,22 @@ namespace TheCertMaster.Services
             public int Answers { get; set; }
             public string Status { get; set; } = "";
             public string Message { get; set; } = "";
+        }
+
+        private sealed class ProcessCsvResult
+        {
+            public string Message { get; set; } = "";
+            public int Rows { get; set; }
+            public int Quizzes { get; set; }
+            public int Questions { get; set; }
+            public int Answers { get; set; }
+        }
+
+        private sealed class PackageValidationResult
+        {
+            public ZipArchiveEntry CsvEntry { get; set; } = default!;
+            public List<ZipArchiveEntry> ImageEntries { get; } = new();
+            public List<string> Warnings { get; } = new();
         }
 
         private string GetImportHistoryPath()
@@ -102,7 +133,7 @@ namespace TheCertMaster.Services
             return $"Saved import file: {Path.GetFileName(outPath)}";
         }
 
-        public async Task<object> SaveUploadPackageAsync(IFormFile file)
+        public async Task<PackageUploadResult> SaveUploadPackageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 throw new InvalidOperationException("No file received.");
@@ -127,18 +158,15 @@ namespace TheCertMaster.Services
             string? csvEntryName = null;
             string? csvSavedFileName = null;
             int imagesSaved = 0;
+            var warnings = new List<string>();
 
             using (var zipStream = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: false))
             {
-                var csvEntries = archive.Entries
-                    .Where(e => !string.IsNullOrWhiteSpace(e.Name) && e.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                var validation = ValidatePackageArchive(archive);
+                warnings.AddRange(validation.Warnings);
 
-                if (csvEntries.Count != 1)
-                    throw new InvalidOperationException("Package must contain exactly one .csv file.");
-
-                var csvEntry = csvEntries[0];
+                var csvEntry = validation.CsvEntry;
                 csvEntryName = csvEntry.Name;
                 csvSavedFileName = $"{packageId}_{Path.GetFileName(csvEntry.Name)}";
                 var csvOutPath = Path.Combine(privateUploadsRoot, csvSavedFileName);
@@ -147,23 +175,10 @@ namespace TheCertMaster.Services
                 using (var outStream = new FileStream(csvOutPath, FileMode.Create, FileAccess.Write))
                     await inStream.CopyToAsync(outStream);
 
-                foreach (var entry in archive.Entries)
+                foreach (var entry in validation.ImageEntries)
                 {
-                    if (string.IsNullOrWhiteSpace(entry.Name))
-                        continue;
-
-                    var ext = Path.GetExtension(entry.Name);
-                    if (string.IsNullOrWhiteSpace(ext))
-                        continue;
-
-                    if (!IsSupportedImageExtension(ext))
-                        continue;
-
-                    var fileNameOnly = Path.GetFileName(entry.Name);
-                    if (string.IsNullOrWhiteSpace(fileNameOnly))
-                        continue;
-
-                    var outFileName = EnsureUniqueFileName(imagesDir, fileNameOnly);
+                    var fileNameOnly = Path.GetFileName(entry.FullName);
+                    var outFileName = fileNameOnly;
                     var outPath = Path.Combine(imagesDir, outFileName);
 
                     using (var inStream = entry.Open())
@@ -174,14 +189,24 @@ namespace TheCertMaster.Services
                 }
             }
 
-            return new
+            if (string.IsNullOrWhiteSpace(csvSavedFileName))
+                throw new InvalidOperationException("Package processing failed because the CSV file could not be prepared.");
+
+            var importResult = await ProcessCsvInternalAsync(csvSavedFileName);
+
+            return new PackageUploadResult
             {
                 PackageId = packageId,
                 ZipFileName = Path.GetFileName(zipPath),
                 CsvFileName = csvSavedFileName ?? "",
                 ImageBaseUrl = $"/uploads/images/{packageId}/",
                 ImagesSaved = imagesSaved,
-                CsvEntry = csvEntryName ?? ""
+                CsvEntry = csvEntryName ?? "",
+                QuizzesImported = importResult.Quizzes,
+                QuestionsImported = importResult.Questions,
+                AnswersImported = importResult.Answers,
+                ImportMessage = importResult.Message,
+                Warnings = warnings
             };
         }
 
@@ -310,6 +335,12 @@ namespace TheCertMaster.Services
 
         public async Task<string> ProcessCsvAsync(string fileName)
         {
+            var result = await ProcessCsvInternalAsync(fileName);
+            return result.Message;
+        }
+
+        private async Task<ProcessCsvResult> ProcessCsvInternalAsync(string fileName)
+        {
             var run = new ImportRunRecord
             {
                 ImportedUtc = DateTime.UtcNow,
@@ -355,9 +386,58 @@ namespace TheCertMaster.Services
                     })
                     .ToList();
 
+                if (rows.Count == 0)
+                    throw new InvalidOperationException("CSV has headers but no valid quiz rows.");
+
+                var incompleteRows = rows
+                    .Where(r => string.IsNullOrWhiteSpace(r.QuizTitle)
+                        || string.IsNullOrWhiteSpace(r.QuestionText)
+                        || string.IsNullOrWhiteSpace(r.AnswerText))
+                    .Take(3)
+                    .ToList();
+
+                if (incompleteRows.Count > 0)
+                    throw new InvalidOperationException("CSV contains rows with blank QuizTitle, QuestionText, or AnswerText values.");
+
+                var duplicateQuestionImageKeys = rows
+                    .Where(r => !string.IsNullOrWhiteSpace(r.QuestionImgKey))
+                    .GroupBy(r => new { r.QuizTitle, r.QuestionText })
+                    .Select(g => new
+                    {
+                        g.Key,
+                        Keys = g.SelectMany(r => SplitImageKeys(r.QuestionImgKey))
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList()
+                    })
+                    .Where(x => x.Keys.Count > 1)
+                    .ToList();
+
+                if (duplicateQuestionImageKeys.Count > 0)
+                {
+                    var example = duplicateQuestionImageKeys[0];
+                    throw new InvalidOperationException($"Question '{example.Key.QuestionText}' in quiz '{example.Key.QuizTitle}' references multiple image keys. Use one image key per question.");
+                }
+
                 var grouped = rows.GroupBy(r => new { Title = r.QuizTitle, Category = NormalizeCategory(r.Category) });
                 var packageId = TryGetPackageIdFromImportedFile(fileName);
                 var packageImagesDir = GetPackageImagesDirectory(packageId);
+
+                if (!string.IsNullOrWhiteSpace(packageId))
+                {
+                    var missingImageKeys = rows
+                        .SelectMany(r => SplitImageKeys(r.QuestionImgKey))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Where(imageKey => !ResolveImageFiles(packageImagesDir, imageKey).Any())
+                        .ToList();
+
+                    if (missingImageKeys.Count > 0)
+                    {
+                        throw new InvalidOperationException(
+                            "Package image validation failed. Missing image files for key(s): " +
+                            string.Join(", ", missingImageKeys.Take(5)) +
+                            (missingImageKeys.Count > 5 ? " ..." : string.Empty));
+                    }
+                }
 
                 int quizCount = 0, questionCount = 0, answerCount = 0;
 
@@ -446,7 +526,14 @@ namespace TheCertMaster.Services
 
                 AppendImportHistory(run);
 
-                return run.Message;
+                return new ProcessCsvResult
+                {
+                    Message = run.Message,
+                    Rows = run.Rows,
+                    Quizzes = run.Quizzes,
+                    Questions = run.Questions,
+                    Answers = run.Answers
+                };
             }
             catch (Exception ex)
             {
@@ -455,6 +542,48 @@ namespace TheCertMaster.Services
                 try { AppendImportHistory(run); } catch { }
                 throw;
             }
+        }
+
+        private static PackageValidationResult ValidatePackageArchive(ZipArchive archive)
+        {
+            var result = new PackageValidationResult();
+            var csvEntries = archive.Entries
+                .Where(e => !string.IsNullOrWhiteSpace(e.Name) && e.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (csvEntries.Count != 1)
+                throw new InvalidOperationException("Package must contain exactly one CSV file.");
+
+            var csvEntry = csvEntries[0];
+            if (csvEntry.FullName.Contains("/") || csvEntry.FullName.Contains("\\"))
+                throw new InvalidOperationException("The package CSV must be placed at the root of the ZIP file, not inside a folder.");
+
+            result.CsvEntry = csvEntry;
+
+            var supportedImageEntries = archive.Entries
+                .Where(e => !string.IsNullOrWhiteSpace(e.Name))
+                .Where(e => IsSupportedImageExtension(Path.GetExtension(e.Name)))
+                .ToList();
+
+            foreach (var imageEntry in supportedImageEntries)
+            {
+                var normalizedPath = imageEntry.FullName.Replace('\\', '/');
+                if (!normalizedPath.StartsWith("images/", StringComparison.OrdinalIgnoreCase))
+                    result.Warnings.Add($"Image '{imageEntry.FullName}' is not under the images/ folder. It will still be imported, but images/ is the recommended package layout.");
+            }
+
+            var duplicateImageKeys = supportedImageEntries
+                .GroupBy(e => Path.GetFileNameWithoutExtension(e.Name), StringComparer.OrdinalIgnoreCase)
+                .Where(g => !string.IsNullOrWhiteSpace(g.Key) && g.Count() > 1)
+                .Select(g => g.Key)
+                .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (duplicateImageKeys.Count > 0)
+                throw new InvalidOperationException("Package contains duplicate image keys. Image file names must be unique by name without extension: " + string.Join(", ", duplicateImageKeys));
+
+            result.ImageEntries.AddRange(supportedImageEntries);
+            return result;
         }
 
         private static string NormalizeCategory(string? category)

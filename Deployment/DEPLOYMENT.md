@@ -59,12 +59,17 @@ Use these bundle assets when preparing a server:
 - [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip): the upload-ready archive for a clean server
 - [Deployment\scripts](Deployment/scripts): packaged copies of the install and verification scripts
 - [Deployment\source](Deployment/source): packaged source tree for on-server publish and EF migration execution
+- [Deployment\sample-imports\Basic_N10-009_Quiz_Import_Package.zip](sample-imports/Basic_N10-009_Quiz_Import_Package.zip): bundled quiz import package for post-install validation
 
 Recommended handling:
 
 1. Copy [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip) to the target server
 2. Extract it so the server ends up with `C:\Deployment\scripts` and `C:\Deployment\source`
 3. Run the packaged scripts from `C:\Deployment\scripts`
+
+After installation, use:
+`C:\Deployment\sample-imports\Basic_N10-009_Quiz_Import_Package.zip`
+to validate quiz upload and import in the admin dashboard.
 
 For deployment servers, prefer this package flow instead of installing Git and cloning the repository directly onto the server.
 

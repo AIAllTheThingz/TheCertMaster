@@ -34,9 +34,17 @@ namespace TheCertMaster.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> UploadPackage([FromForm] FileUploadModel model)
         {
-            var result = await _import.SaveUploadPackageAsync(model.File);
-            _logger.LogInformation("Admin uploaded package {FileName}", model.File?.FileName);
-            return Ok(result);
+            try
+            {
+                var result = await _import.SaveUploadPackageAsync(model.File);
+                _logger.LogInformation("Admin uploaded and imported package {FileName}", model.File?.FileName);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Package upload validation failed for {FileName}", model.File?.FileName);
+                return BadRequest(ex.Message);
+            }
         }
 
         //[Authorize(Roles ="Admin")]
@@ -49,6 +57,11 @@ namespace TheCertMaster.Controllers
                 var result = await _import.ProcessCsvAsync(fileName);
                 _logger.LogInformation("Admin processed import file {FileName}", fileName);
                 return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Import validation failed for file {FileName}", fileName);
+                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.IO.Compression;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -223,6 +224,99 @@ public class FlowTests : IAsyncLifetime
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<QuizDbContext>();
         Assert.True(db.Quizzes.Any(q => q.Title == "Integration Import Quiz"));
+    }
+
+    [Fact]
+    public async Task UploadPackage_ImportsQuizAndImagesInOneStep()
+    {
+        var client = _factory.CreateClient();
+        var token = await _factory.LoginAsAdminAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        byte[] packageBytes;
+        using (var ms = new MemoryStream())
+        {
+            using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                var csvEntry = archive.CreateEntry("package-import.csv");
+                await using (var writer = new StreamWriter(csvEntry.Open(), Encoding.UTF8))
+                {
+                    await writer.WriteAsync(string.Join(Environment.NewLine, new[]
+                    {
+                        "QuizTitle,Category,QuestionText,AnswerText,IsCorrect,QuestionImgKey",
+                        "Package Import Quiz,Networking,What port does HTTPS use?,443,true,diagram-01",
+                        "Package Import Quiz,Networking,What port does HTTPS use?,80,false,diagram-01"
+                    }));
+                }
+
+                var imageEntry = archive.CreateEntry("images/diagram-01.png");
+                await using (var imageStream = imageEntry.Open())
+                {
+                    await imageStream.WriteAsync(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
+                }
+            }
+
+            packageBytes = ms.ToArray();
+        }
+
+        using var multipart = new MultipartFormDataContent();
+        multipart.Add(new ByteArrayContent(packageBytes), "File", "package-import.zip");
+
+        using var uploadResponse = await client.PostAsync("/api/import/upload-package", multipart);
+        uploadResponse.EnsureSuccessStatusCode();
+
+        var uploadBody = await uploadResponse.Content.ReadAsStringAsync();
+        using var uploadDoc = JsonDocument.Parse(uploadBody);
+
+        Assert.Equal("package-import.csv", uploadDoc.RootElement.GetProperty("CsvEntry").GetString());
+        Assert.Equal(1, uploadDoc.RootElement.GetProperty("QuizzesImported").GetInt32());
+        Assert.Equal(1, uploadDoc.RootElement.GetProperty("QuestionsImported").GetInt32());
+        Assert.Equal(2, uploadDoc.RootElement.GetProperty("AnswersImported").GetInt32());
+        Assert.Equal(1, uploadDoc.RootElement.GetProperty("ImagesSaved").GetInt32());
+        Assert.Contains("Imported 1 quiz(es)", uploadDoc.RootElement.GetProperty("ImportMessage").GetString());
+
+        using var verifyResponse = await client.GetAsync("/api/quiz?category=Networking");
+        verifyResponse.EnsureSuccessStatusCode();
+
+        var verifyPayload = await verifyResponse.Content.ReadAsStringAsync();
+        Assert.Contains("Package Import Quiz", verifyPayload);
+    }
+
+    [Fact]
+    public async Task UploadPackage_WithMissingImageKey_ReturnsValidationError()
+    {
+        var client = _factory.CreateClient();
+        var token = await _factory.LoginAsAdminAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        byte[] packageBytes;
+        using (var ms = new MemoryStream())
+        {
+            using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                var csvEntry = archive.CreateEntry("missing-image.csv");
+                await using (var writer = new StreamWriter(csvEntry.Open(), Encoding.UTF8))
+                {
+                    await writer.WriteAsync(string.Join(Environment.NewLine, new[]
+                    {
+                        "QuizTitle,Category,QuestionText,AnswerText,IsCorrect,QuestionImgKey",
+                        "Broken Package Quiz,Networking,Which port does HTTPS use?,443,true,missing-diagram",
+                        "Broken Package Quiz,Networking,Which port does HTTPS use?,80,false,missing-diagram"
+                    }));
+                }
+            }
+
+            packageBytes = ms.ToArray();
+        }
+
+        using var multipart = new MultipartFormDataContent();
+        multipart.Add(new ByteArrayContent(packageBytes), "File", "broken-package.zip");
+
+        using var uploadResponse = await client.PostAsync("/api/import/upload-package", multipart);
+        Assert.Equal(HttpStatusCode.BadRequest, uploadResponse.StatusCode);
+
+        var body = await uploadResponse.Content.ReadAsStringAsync();
+        Assert.Contains("Missing image files for key(s): missing-diagram", body);
     }
 
     [Fact]

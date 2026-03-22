@@ -403,7 +403,7 @@
             <div class="hero-stack">
                 <div class="hero-card">
                     <strong>Import</strong>
-                    <span>Upload CSV or ZIP packages, review extracted files, and push new quiz content into the database cleanly.</span>
+                    <span>Upload CSV or ZIP packages, validate package structure, and push new quiz content into the database cleanly.</span>
                 </div>
                 <div class="hero-card">
                     <strong>Manage</strong>
@@ -430,7 +430,7 @@
     <form id="uploadForm" enctype="multipart/form-data" style="display:none;">
         <h3>Upload Quiz File (.csv / .txt / .zip)</h3>
         <div class="muted">
-            Upload a `.csv` or `.txt` file for direct import, or a `.zip` package that contains one CSV plus question images.
+            Upload a `.csv` or `.txt` file for direct import, or a `.zip` package that contains one root-level CSV plus question images.
         </div>
         <input type="file" id="fileInput" name="File" accept=".csv,.txt,.zip" required />
         <button type="submit">Upload</button>
@@ -819,14 +819,22 @@ const loginForm = document.getElementById("loginForm");
                 if (res.ok) {
                     if (isZip) {
                         const data = await res.json();
+                        const warnings = Array.isArray(data.Warnings) && data.Warnings.length
+                            ? "\nWarnings:\n- " + data.Warnings.join("\n- ")
+                            : "";
                         setStatus(
-                            "Package upload successful.\n" +
+                            "Package upload and import successful.\n" +
                             `ZIP: ${data.ZipFileName}\n` +
-                            `CSV Ready To Import: ${data.CsvFileName}\n` +
-                            `Images Saved: ${data.ImagesSaved}`,
+                            `CSV Imported: ${data.CsvFileName}\n` +
+                            `Quizzes Imported: ${data.QuizzesImported}\n` +
+                            `Questions Imported: ${data.QuestionsImported}\n` +
+                            `Answers Imported: ${data.AnswersImported}\n` +
+                            `Images Saved: ${data.ImagesSaved}\n` +
+                            `${data.ImportMessage || ""}` +
+                            warnings,
                             "success"
                         );
-                        showUploadAssist(`Package processed. Extracted CSV: ${data.CsvFileName}`, data.CsvFileName);
+                        showUploadAssist("Package import completed. The package CSV was imported automatically.");
                     } else {
                         const text = await res.text();
                         setStatus("Upload successful.\n" + text, "success");
@@ -861,7 +869,7 @@ const loginForm = document.getElementById("loginForm");
                     const actionHtml = canImport
                         ? `<button onclick="processFile('${escapeHtmlAttr(fileName)}')">Import</button>
                            <button class="danger" onclick="deleteFile('${escapeHtmlAttr(fileName)}')">Delete</button>`
-                        : `<span class="muted">ZIP package: upload only</span>
+                        : `<span class="muted">ZIP package: imported during upload</span>
                            <button class="danger" onclick="deleteFile('${escapeHtmlAttr(fileName)}')">Delete</button>`;
 
                     const row = document.createElement("tr");
@@ -885,7 +893,7 @@ const loginForm = document.getElementById("loginForm");
         async function processFile(name) {
             const lowerName = (name || "").toLowerCase();
             if (!(lowerName.endsWith(".csv") || lowerName.endsWith(".txt"))) {
-                setStatus("Only extracted CSV or TXT files can be imported. Upload ZIP packages first, then import the extracted CSV.", "warning");
+                setStatus("Only direct CSV or TXT files can be imported here. ZIP packages now import during upload.", "warning");
                 return;
             }
 
