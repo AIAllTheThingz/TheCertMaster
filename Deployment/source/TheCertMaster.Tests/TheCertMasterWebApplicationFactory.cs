@@ -18,6 +18,8 @@ namespace TheCertMaster.Tests;
 
 public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private const string TestAdminEmail = "admin@thecertmaster.local";
+    private const string TestAdminPassword = "ChangeThisLocalDevPassword!2026";
     private readonly FakeEmailService _fakeEmailService = new();
     private readonly string _databaseName = $"TheCertMasterTests_{Guid.NewGuid():N}";
     private readonly IDictionary<string, string?>? _overrides;
@@ -109,8 +111,8 @@ public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>
     {
         using var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["email"] = "admin@thecertmaster.local",
-            ["password"] = "Admin@123"
+            ["email"] = TestAdminEmail,
+            ["password"] = TestAdminPassword
         });
 
         using var response = await client.PostAsync("/api/auth/login", content);
@@ -157,7 +159,7 @@ public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>
             }
         }
 
-        var adminEmail = "admin@thecertmaster.local";
+        var adminEmail = TestAdminEmail;
         var existingUser = await userManager.FindByEmailAsync(adminEmail);
         if (existingUser == null)
         {
@@ -170,7 +172,7 @@ public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>
                 EmailConfirmed = true
             };
 
-            var result = await userManager.CreateAsync(existingUser, "Admin@123");
+            var result = await userManager.CreateAsync(existingUser, TestAdminPassword);
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException(string.Join("; ", result.Errors.Select(e => e.Description)));

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -291,6 +292,20 @@ builder.Services.AddAuthentication(options =>
 {
     options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     options.SaveToken = true;
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (string.IsNullOrWhiteSpace(context.Token) &&
+                context.Request.Cookies.TryGetValue("TheCertMasterAdminToken", out var cookieToken) &&
+                !string.IsNullOrWhiteSpace(cookieToken))
+            {
+                context.Token = cookieToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -379,6 +394,28 @@ if (httpsRedirectionEnabled)
 }
 app.UseHttpLogging();
 app.UseCors(CorsPolicyName);
+app.Map("/manage.html", manageApp =>
+{
+    manageApp.Run(async context =>
+    {
+        var authResult = await context.AuthenticateAsync(JwtBearerDefaults.AuthenticationScheme);
+        if (!authResult.Succeeded || authResult.Principal?.Identity?.IsAuthenticated != true)
+        {
+            await context.ChallengeAsync(JwtBearerDefaults.AuthenticationScheme);
+            return;
+        }
+
+        if (!authResult.Principal.IsInRole("Admin"))
+        {
+            await context.ForbidAsync(JwtBearerDefaults.AuthenticationScheme);
+            return;
+        }
+
+        context.User = authResult.Principal;
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(Path.Combine(app.Environment.WebRootPath ?? "wwwroot", "manage.html"));
+    });
+});
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
@@ -421,7 +458,6 @@ app.MapGet("/version", (IHostEnvironment environment) =>
     {
         application = assembly.Name ?? "TheCertMaster",
         version = informationalVersion,
-        environment = environment.EnvironmentName,
         utc = DateTime.UtcNow
     });
 })
@@ -535,7 +571,7 @@ using (var scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment())
     {
         var devAdminEmail = configuration["DevAdmin:Email"] ?? "admin@thecertmaster.local";
-        var devAdminPassword = configuration["DevAdmin:Password"] ?? "Admin@123";
+        var devAdminPassword = configuration["DevAdmin:Password"] ?? "ChangeThisLocalDevPassword!2026";
 
         var devAdminUser = await userManager.FindByEmailAsync(devAdminEmail);
         if (devAdminUser == null)

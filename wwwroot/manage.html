@@ -546,8 +546,32 @@ const loginForm = document.getElementById("loginForm");
         const userList = document.getElementById("userList");
         const uploadAssist = document.getElementById("uploadAssist");
 
-        let token = localStorage.getItem("jwtToken");
+        const adminTokenCookieName = "TheCertMasterAdminToken";
+        let token = localStorage.getItem("jwtToken") || getTokenFromCookie();
         let pendingImportedCsvName = null;
+
+        function getTokenFromCookie() {
+            const match = document.cookie
+                .split("; ")
+                .find(value => value.startsWith(`${adminTokenCookieName}=`));
+            return match ? decodeURIComponent(match.substring(adminTokenCookieName.length + 1)) : "";
+        }
+
+        function setAdminTokenCookie(value) {
+            if (!value) return;
+            const secureFlag = window.location.protocol === "https:" ? "; Secure" : "";
+            document.cookie = `${adminTokenCookieName}=${encodeURIComponent(value)}; Path=/; SameSite=Lax${secureFlag}`;
+        }
+
+        function clearAdminTokenCookie() {
+            document.cookie = `${adminTokenCookieName}=; Path=/; Max-Age=0; SameSite=Lax`;
+        }
+
+        function persistAdminToken(value) {
+            token = value;
+            localStorage.setItem("jwtToken", value);
+            setAdminTokenCookie(value);
+        }
 
         function escapeHtml(str) {
             return String(str ?? "")
@@ -634,6 +658,7 @@ const loginForm = document.getElementById("loginForm");
         function clearAdminSession(message, tone = "error") {
             token = null;
             localStorage.removeItem("jwtToken");
+            clearAdminTokenCookie();
             hideAdminTools();
             loginForm.style.display = "block";
             setStatus(message, tone);
@@ -663,11 +688,15 @@ const loginForm = document.getElementById("loginForm");
         }
 
         async function restoreAdminSession(successMessage = "Session restored. Admin tools are ready.") {
-            token = localStorage.getItem("jwtToken");
+            token = localStorage.getItem("jwtToken") || getTokenFromCookie();
             if (!token) {
                 hideAdminTools();
                 loginForm.style.display = "block";
                 return false;
+            }
+
+            if (!localStorage.getItem("jwtToken")) {
+                localStorage.setItem("jwtToken", token);
             }
 
             try {
@@ -790,8 +819,7 @@ const loginForm = document.getElementById("loginForm");
                 }
 
                 const data = await res.json();
-                token = data.token;
-                localStorage.setItem("jwtToken", token);
+                persistAdminToken(data.token);
                 await restoreAdminSession("Login successful. Admin tools are now available.");
             } catch (err) {
                 setStatus(err.message || "Unable to sign in right now.", "error");

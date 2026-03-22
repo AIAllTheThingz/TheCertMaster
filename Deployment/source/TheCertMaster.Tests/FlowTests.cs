@@ -33,7 +33,7 @@ public class FlowTests : IAsyncLifetime
         using var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["email"] = "admin@thecertmaster.local",
-            ["password"] = "Admin@123"
+            ["password"] = "ChangeThisLocalDevPassword!2026"
         });
 
         using var response = await client.PostAsync("/api/auth/login", content);
@@ -77,9 +77,9 @@ public class FlowTests : IAsyncLifetime
         using var doc = JsonDocument.Parse(payload);
 
         Assert.Equal("TheCertMaster", doc.RootElement.GetProperty("application").GetString());
-        Assert.False(string.IsNullOrWhiteSpace(doc.RootElement.GetProperty("environment").GetString()));
         Assert.True(doc.RootElement.TryGetProperty("version", out _));
         Assert.True(doc.RootElement.TryGetProperty("utc", out _));
+        Assert.False(doc.RootElement.TryGetProperty("environment", out _));
     }
 
 

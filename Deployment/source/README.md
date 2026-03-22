@@ -104,7 +104,7 @@ On startup in `Development`, the app will:
 ### Default Development Admin
 
 - email: `admin@thecertmaster.local`
-- password: `Admin@123`
+- password: set your own local-only value in `appsettings.Development.json`
 
 You should change these for any shared or non-local environment.
 
