@@ -156,9 +156,13 @@ namespace TheCertMaster.Controllers
             {
                 if (!existingUser.EmailConfirmed)
                 {
-                    await SendVerificationEmailAsync(existingUser);
-                    _logger.LogInformation("Re-sent verification during registration attempt for existing unverified account {Email}", email);
-                    return Ok(new { message = "Account already exists but is not yet verified. A fresh verification email has been sent." });
+                    var verificationSent = await TrySendVerificationEmailAsync(existingUser, "public registration retry for existing unverified account");
+                    return Ok(new
+                    {
+                        message = verificationSent
+                            ? "Account already exists but is not yet verified. A fresh verification email has been sent."
+                            : "Account already exists but is not yet verified. We could not send the verification email right now, so please try the resend verification option again shortly."
+                    });
                 }
 
                 _logger.LogWarning("Public registration attempted with existing verified email {Email}", email);
@@ -181,12 +185,13 @@ namespace TheCertMaster.Controllers
             }
 
             await _userManager.AddToRoleAsync(user, "User");
-            await SendVerificationEmailAsync(user);
-            _logger.LogInformation("Public user registered and verification email queued for {Email}", email);
+            var emailQueued = await TrySendVerificationEmailAsync(user, "public registration");
 
             return Ok(new
             {
-                message = "Registration successful. Please check your email and confirm your address before signing in."
+                message = emailQueued
+                    ? "Registration successful. Please check your email and confirm your address before signing in."
+                    : "Registration successful, but we could not send the verification email right now. Please use the resend verification option in a moment before signing in."
             });
         }
 
@@ -202,13 +207,16 @@ namespace TheCertMaster.Controllers
             var user = await _userManager.FindByEmailAsync(email);
             if (user != null && !user.EmailConfirmed)
             {
-                await SendVerificationEmailAsync(user);
-                _logger.LogInformation("Verification email resent for {Email}", email);
+                var verificationSent = await TrySendVerificationEmailAsync(user, "resend verification");
+                return Ok(new
+                {
+                    message = verificationSent
+                        ? "If an unverified account exists for that email address, a verification email has been sent."
+                        : "If an unverified account exists for that email address, we could not send the verification email right now. Please try again shortly."
+                });
             }
-            else
-            {
-                _logger.LogInformation("Verification email resend requested for non-actionable email {Email}", email);
-            }
+
+            _logger.LogInformation("Verification email resend requested for non-actionable email {Email}", email);
 
             return Ok(new
             {
@@ -389,6 +397,21 @@ namespace TheCertMaster.Controllers
                 $"If you did not create this account, you can ignore this email.";
 
             await _emailService.SendAsync(user.Email ?? string.Empty, "Verify your The Cert Master account", body);
+        }
+
+        private async Task<bool> TrySendVerificationEmailAsync(ApplicationUser user, string reason)
+        {
+            try
+            {
+                await SendVerificationEmailAsync(user);
+                _logger.LogInformation("Verification email sent for {Email} during {Reason}", user.Email, reason);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Verification email could not be sent for {Email} during {Reason}", user.Email, reason);
+                return false;
+            }
         }
     }
 }

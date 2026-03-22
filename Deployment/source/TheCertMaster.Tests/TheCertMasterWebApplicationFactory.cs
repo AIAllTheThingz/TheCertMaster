@@ -234,14 +234,22 @@ public sealed class FakeEmailService : IEmailService
     private readonly List<FakeEmailMessage> _messages = new();
 
     public IReadOnlyList<FakeEmailMessage> Messages => _messages;
+    public bool ThrowOnSend { get; set; }
 
     public Task SendAsync(string toEmail, string subject, string bodyText)
     {
+        if (ThrowOnSend)
+            throw new InvalidOperationException("Simulated email delivery failure.");
+
         _messages.Add(new FakeEmailMessage(toEmail, subject, bodyText));
         return Task.CompletedTask;
     }
 
-    public void Clear() => _messages.Clear();
+    public void Clear()
+    {
+        ThrowOnSend = false;
+        _messages.Clear();
+    }
 }
 
 public sealed record FakeEmailMessage(string ToEmail, string Subject, string BodyText);

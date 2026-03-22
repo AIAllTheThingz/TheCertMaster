@@ -378,6 +378,37 @@ public class FlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PublicRegistration_WhenVerificationEmailFails_ReturnsFriendlySuccessMessage()
+    {
+        _factory.EmailService.Clear();
+        _factory.EmailService.ThrowOnSend = true;
+        var client = _factory.CreateClient();
+
+        var registerPayload = JsonSerializer.Serialize(new
+        {
+            firstName = "Email",
+            lastName = "Pending",
+            email = "emailpending@example.com",
+            password = "Password!123",
+            confirmPassword = "Password!123"
+        });
+
+        using var registerResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(registerPayload, Encoding.UTF8, "application/json"));
+
+        registerResponse.EnsureSuccessStatusCode();
+        var body = await registerResponse.Content.ReadAsStringAsync();
+        Assert.Contains("could not send the verification email right now", body, StringComparison.OrdinalIgnoreCase);
+
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.FindByEmailAsync("emailpending@example.com");
+        Assert.NotNull(user);
+        Assert.False(user!.EmailConfirmed);
+    }
+
+    [Fact]
     public async Task PublicRegistration_RejectsSpecialCharactersInProfileNames()
     {
         var client = _factory.CreateClient();
