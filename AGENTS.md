@@ -6,6 +6,20 @@ This repository adopts **Public Access Agents `v0.10.0`** from `AIAllTheThingz/P
 
 Repository facts and explicit project requirements remain authoritative. The external baseline strengthens engineering discipline; it does not invent project facts or authorize production actions.
 
+### Mandatory pinned upstream extensions
+
+The local `AGENTS.md` hierarchy is the composition layer that makes the external baseline applicable to repository work. The files under `docs/public-ai-governance/standards-bundle/` are a traceable index and hash record; because the pilot deliberately used `--no-copy-sources`, their presence alone does **not** make upstream instructions active for application files.
+
+Before modifying code, tests, configuration, deployment automation, or documentation, an agent must:
+
+1. Read `docs/public-ai-governance/standards-bundle/COMPOSITION_MANIFEST.json`.
+2. Retrieve and read every upstream source path listed in that manifest from **exactly** `AIAllTheThingz/Public-AI-Governance` at tag `v0.10.0` / source commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`.
+3. For each selected upstream `AGENTS.md`, follow and read its referenced supporting standards from that same exact pinned release when they apply to the changed scope.
+4. Apply those pinned upstream requirements together with this repository's project facts and any more-specific local `AGENTS.md` instructions.
+5. If the exact pinned source or a required transitive supporting standard cannot be obtained or read, record the external-baseline review as **`Blocked`** and do not claim that Public Access Agents was applied to the change.
+
+Do not substitute `main`, a newer tag, cached prose from another repository, or the generated composition index for the exact pinned source without an explicit adoption update and review.
+
 ## Project facts
 
 - ASP.NET Core 9 / .NET 9 web application and API.
