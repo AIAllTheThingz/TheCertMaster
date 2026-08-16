@@ -17,7 +17,7 @@
 - Operating-system boundary: `windows-server`
 - Generated disciplines: `application-security`, `architecture`, `testing`, `accessibility`, `privacy`, `observability`, `ci-cd`, `supply-chain`, `release-engineering`, `api-engineering`, `database`, `integration`, `sre`, `documentation`
 
-The exact generated manifest is `project-manifest.json`. The traceable composition is under `standards-bundle/`; upstream standards were not flattened into this repository.
+The exact generated manifest is `project-manifest.json`. The traceable composition is under `standards-bundle/`; upstream standards were deliberately not flattened into this repository. Because an index and hashes do not themselves govern application files, the repository root `AGENTS.md` explicitly binds agents to the exact upstream source paths listed in `standards-bundle/COMPOSITION_MANIFEST.json` and to applicable transitive supporting standards from the same pinned `v0.10.0` release. If those exact pinned sources cannot be obtained or read, application of the external baseline is **`Blocked`** and must not be claimed as completed.
 
 ## Commands exercised
 
@@ -44,7 +44,7 @@ Detailed command output and return-code evidence are retained beside this record
 
 ## Adoption outcome
 
-The published standards could be selected and composed without repository-author context. A real root `AGENTS.md` and a tighter `Deployment/AGENTS.md` were tailored from actual repository facts so browser/API application work and privileged deployment work have different instruction scopes.
+The published standards could be selected and composed without repository-author context. A real root `AGENTS.md` and a tighter `Deployment/AGENTS.md` were tailored from actual repository facts so browser/API application work and privileged deployment work have different instruction scopes. The root instructions also establish how repository agents must read and apply the exact pinned upstream composition instead of treating the generated bundle as self-enforcing.
 
 The generated profile composition was broad but appropriate for a real ASP.NET Core application: it included security, architecture, testing, accessibility, privacy, observability, CI/CD, supply chain, release, API, database, integration, SRE, and documentation overlays.
 
@@ -52,7 +52,8 @@ The generated profile composition was broad but appropriate for a real ASP.NET C
 
 1. **Adopter-specific test infrastructure:** a generic `dotnet test` invocation was insufficient because the project integration/flow suite requires SQL Server and `TEST_SQLSERVER_BASE_CONNECTION`. Once the pilot used the repository's actual CI prerequisites, the same project restore/build/tests passed. This is project-specific tailoring, not an upstream standards defect.
 2. **Adopter-specific runtime facts:** the manifest can select C#/.NET, ASP.NET Core, Windows Server, and disciplines, but it correctly does not infer the project's exact .NET 9, ASP.NET Core 9, SQL Server, IIS, JWT, SMTP, upload/import, and authentication boundaries. Those facts remain in downstream instructions.
-3. **No upstream selection/composition defect identified:** manifest generation and traceable composition completed without schema, path, or package-slug failure.
+3. **Adoption-binding clarification:** `--no-copy-sources` produces traceable source paths and hashes, not automatically active parent instructions for downstream files. The root `AGENTS.md` now makes the exact pinned upstream composition and applicable transitive standards mandatory reads, with an explicit `Blocked` outcome if those sources are unavailable.
+4. **No upstream selection/composition defect identified:** manifest generation and traceable composition completed without schema, path, or package-slug failure.
 
 ## Limitations
 
@@ -63,4 +64,4 @@ The generated profile composition was broad but appropriate for a real ASP.NET C
 
 ## Follow-up
 
-No focused upstream defect was created from this pilot because the observed friction is project-specific CI/environment tailoring already expected by the standards model. This record is suitable as the application/service downstream adoption input for Public-AI-Governance issue #41 and later maturity review.
+No focused upstream defect was created from this pilot because the observed friction is project-specific CI/environment tailoring plus an adoption-binding clarification already fixed in the downstream instructions. This record is suitable as the application/service downstream adoption input for Public-AI-Governance issue #41 and later maturity review.
