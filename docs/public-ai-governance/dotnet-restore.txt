@@ -1,0 +1,4 @@
+  Determining projects to restore...
+/home/runner/work/TheCertMaster/TheCertMaster/downstream/TheCertMaster.csproj : warning NU1902: Package 'MailKit' 4.14.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-9j88-vvj5-vhgr [/home/runner/work/TheCertMaster/TheCertMaster/downstream/TheCertMaster.sln]
+  Restored /home/runner/work/TheCertMaster/TheCertMaster/downstream/TheCertMaster.csproj (in 8.32 sec).
+  Restored /home/runner/work/TheCertMaster/TheCertMaster/downstream/TheCertMaster.Tests/TheCertMaster.Tests.csproj (in 8.31 sec).

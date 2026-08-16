@@ -1,0 +1,53 @@
+{
+  "findings": [],
+  "metadata": {
+    "manifest": {
+      "disciplines": [
+        "application-security",
+        "architecture",
+        "testing",
+        "accessibility",
+        "privacy",
+        "observability",
+        "ci-cd",
+        "supply-chain",
+        "release-engineering",
+        "api-engineering",
+        "database",
+        "integration",
+        "sre",
+        "documentation"
+      ],
+      "frameworks": [
+        "aspnet-core"
+      ],
+      "languages": [
+        "csharp",
+        "dotnet"
+      ],
+      "name": "TheCertMaster",
+      "operatingSystems": [
+        "windows-server"
+      ],
+      "profile": "WEB_APPLICATION",
+      "schemaVersion": "1.1.0"
+    },
+    "output": "/home/runner/work/TheCertMaster/TheCertMaster/downstream/docs/public-ai-governance/project-manifest.json",
+    "schema": "schemas/v1/project-manifest.schema.json"
+  },
+  "status": "passed",
+  "summary": {
+    "disciplines": 14,
+    "dryRun": false,
+    "frameworks": 1,
+    "languages": 2,
+    "networking": 0,
+    "operatingSystems": 1,
+    "platforms": 0,
+    "profile": "WEB_APPLICATION",
+    "virtualization": 0,
+    "written": true
+  },
+  "tool": "generate-manifest",
+  "version": "1.1.0"
+}

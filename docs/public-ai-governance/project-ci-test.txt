@@ -1,0 +1,193 @@
+Build started 08/16/2026 18:50:24.
+Test run for /home/runner/work/TheCertMaster/TheCertMaster/TheCertMaster.Tests/bin/Debug/net9.0/TheCertMaster.Tests.dll (.NETCoreApp,Version=v9.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.18)
+[xUnit.net 00:00:00.48]   Discovering: TheCertMaster.Tests
+[xUnit.net 00:00:00.81]   Discovered:  TheCertMaster.Tests
+[xUnit.net 00:00:00.81]   Starting:    TheCertMaster.Tests
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[35]
+      No XML encryptor configured. Key {3c9149b3-8984-425c-a0f5-5b052546f039} may be persisted to storage in unencrypted form.
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+fail: TheCertMaster.Controllers.AuthController[0]
+      Verification email could not be sent for emailpending@example.com during public registration
+      System.InvalidOperationException: Simulated email delivery failure.
+         at TheCertMaster.Tests.FakeEmailService.SendAsync(String toEmail, String subject, String bodyText) in /home/runner/work/TheCertMaster/TheCertMaster/TheCertMaster.Tests/TheCertMasterWebApplicationFactory.cs:line 242
+         at TheCertMaster.Controllers.AuthController.SendVerificationEmailAsync(ApplicationUser user) in /home/runner/work/TheCertMaster/TheCertMaster/Controllers/AuthController.cs:line 399
+         at TheCertMaster.Controllers.AuthController.TrySendVerificationEmailAsync(ApplicationUser user, String reason) in /home/runner/work/TheCertMaster/TheCertMaster/Controllers/AuthController.cs:line 406
+  Passed TheCertMaster.Tests.FlowTests.PublicRegistration_WhenVerificationEmailFails_ReturnsFriendlySuccessMessage [494 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+warn: Microsoft.EntityFrameworkCore.Query[20504]
+      Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+info: TheCertMaster.Controllers.ImportController[0]
+      Admin uploaded and imported package package-import.zip
+  Passed TheCertMaster.Tests.FlowTests.UploadPackage_ImportsQuizAndImagesInOneStep [384 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+warn: Microsoft.EntityFrameworkCore.Query[20504]
+      Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+  Passed TheCertMaster.Tests.FlowTests.GuestCustomQuiz_ReturnsFiveQuestionsPerSelectedCategory [121 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+  Passed TheCertMaster.Tests.FlowTests.VersionEndpoint_ReturnsApplicationMetadata [18 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Verification email sent for historyuser@example.com during public registration
+info: TheCertMaster.Controllers.AuthController[0]
+      Email confirmed for user 5a52f292-0fa4-4c1f-a5f6-67d157d8b590
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for historyuser@example.com
+warn: Microsoft.EntityFrameworkCore.Query[20504]
+      Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+warn: Microsoft.EntityFrameworkCore.Query[20504]
+      Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+  Passed TheCertMaster.Tests.FlowTests.AuthenticatedQuizSubmission_IsRecordedInAccountHistory [422 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+  Passed TheCertMaster.Tests.FlowTests.PublicRegistration_RejectsSpecialCharactersInProfileNames [23 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+  Passed TheCertMaster.Tests.FlowTests.GetQuizList_ReturnsSeededQuiz [11 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+  Passed TheCertMaster.Tests.FlowTests.CustomCategoryQuiz_RequestedTwentyFiveAcrossTwoCategories_ReturnsFiftyTotalQuestions [245 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+info: TheCertMaster.Controllers.UsersController[0]
+      Admin created user manageduser@example.com with role User
+info: TheCertMaster.Controllers.UsersController[0]
+      Admin updated profile for user manageduser@example.com
+info: TheCertMaster.Controllers.UsersController[0]
+      Admin sent password reset link to manageduser@example.com
+info: TheCertMaster.Controllers.AuthController[0]
+      Password reset completed for manageduser@example.com
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for manageduser@example.com
+  Passed TheCertMaster.Tests.FlowTests.AdminUserManagement_CanUpdateNames_And_SendPasswordResetLink [400 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+  Passed TheCertMaster.Tests.FlowTests.RandomizedQuiz_CanLimitQuestionCount_And_SubmitScoresOnlyDeliveredSubset [179 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+  Passed TheCertMaster.Tests.FlowTests.HealthEndpoints_ReturnStructuredHealthyPayloads [30 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+info: TheCertMaster.Controllers.UsersController[0]
+      Admin created user plainnamesonly@example.com with role User
+  Passed TheCertMaster.Tests.FlowTests.AdminUserManagement_RejectsSpecialCharactersInProfileNames [190 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+  Passed TheCertMaster.Tests.FlowTests.GuestRandomizedQuiz_IsClampedToFiveQuestions [37 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+  Passed TheCertMaster.Tests.FlowTests.CustomCategoryQuiz_DefaultTwentyPerCategory_ReturnsTwentyFromEachSelectedCategory [283 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Verification email sent for newuser@example.com during public registration
+warn: TheCertMaster.Controllers.AuthController[0]
+      Login blocked for unverified email newuser@example.com
+info: TheCertMaster.Controllers.AuthController[0]
+      Email confirmed for user e4d4e4dd-9b0a-42d3-9d86-b108bb0cf659
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for newuser@example.com
+  Passed TheCertMaster.Tests.FlowTests.PublicRegistration_RequiresEmailVerification_BeforeLoginSucceeds [201 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+  Passed TheCertMaster.Tests.FlowTests.CustomCategoryQuiz_RequestedThirtySixAcrossFourCategories_ReturnsOneHundredFortyFourTotalQuestions [268 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+warn: TheCertMaster.Controllers.ImportController[0]
+      Package upload validation failed for broken-package.zip
+      System.InvalidOperationException: Package image validation failed. Missing image files for key(s): missing-diagram
+         at TheCertMaster.Services.QuizImportService.ProcessCsvInternalAsync(String fileName) in /home/runner/work/TheCertMaster/TheCertMaster/Services/QuizImportService.cs:line 435
+         at TheCertMaster.Services.QuizImportService.SaveUploadPackageAsync(IFormFile file) in /home/runner/work/TheCertMaster/TheCertMaster/Services/QuizImportService.cs:line 195
+         at TheCertMaster.Controllers.ImportController.UploadPackage(FileUploadModel model) in /home/runner/work/TheCertMaster/TheCertMaster/Controllers/ImportController.cs:line 39
+  Passed TheCertMaster.Tests.FlowTests.GetRandomizedQuiz_ReturnsSeededImageUrl [38 ms]
+  Passed TheCertMaster.Tests.FlowTests.UploadPackage_WithMissingImageKey_ReturnsValidationError [117 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+info: TheCertMaster.Controllers.ImportController[0]
+      Admin uploaded file integration-import.csv
+info: TheCertMaster.Controllers.ImportController[0]
+      Admin processed import file 9a049c19-c625-4a20-9940-eaec528f1b95_integration-import.csv
+  Passed TheCertMaster.Tests.FlowTests.UploadAndProcessCsv_ImportsQuizIntoDatabase [149 ms]
+info: Startup[0]
+      TheCertMaster started in Development. SwaggerEnabled=True. HttpsRedirectionEnabled=True. BaseUrl=not-set. Health endpoints: /health/live, /health/ready, /health
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: TheCertMaster.Controllers.AuthController[0]
+      Login succeeded for admin@thecertmaster.local
+[xUnit.net 00:00:36.59]   Finished:    TheCertMaster.Tests
+  Passed TheCertMaster.Tests.FlowTests.Login_WithSeededAdmin_ReturnsJwtToken [102 ms]
+
+Test Run Successful.
+Total tests: 20
+     Passed: 20
+ Total time: 40.6933 Seconds
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:43.01
