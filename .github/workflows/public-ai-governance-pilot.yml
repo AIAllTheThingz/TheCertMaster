@@ -42,87 +42,8 @@ jobs:
           set -euo pipefail
           OUT="$GITHUB_WORKSPACE/downstream/docs/public-ai-governance"
           mkdir -p "$OUT"
-          python standards/tools/generate-manifest/generate_manifest.py \
-            --root standards \
-            --name TheCertMaster \
-            --profile WEB_APPLICATION \
-            --language csharp \
-            --language dotnet \
-            --framework aspnet-core \
-            --operating-system windows-server \
-            --include-profile-required \
-            --manifest-output "$OUT/project-manifest.json" \
-            --format json > "$OUT/generate-manifest-result.json"
-          python standards/tools/compose-agents/compose_agents.py \
-            --root standards \
-            --manifest "$OUT/project-manifest.json" \
-            --output-dir "$OUT/standards-bundle" \
-            --no-copy-sources \
-            --format json > "$OUT/compose-result.json"
-
-      - name: Apply tailored AGENTS hierarchy
-        shell: bash
-        run: |
-          cat > downstream/AGENTS.md <<'EOF'
-          # TheCertMaster Agent Instructions
-
-          ## Adopted engineering baseline
-
-          This repository adopts **Public Access Agents `v0.10.0`** from `AIAllTheThingz/Public-AI-Governance`, source commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`, as an external engineering baseline. The generated manifest, traceable composition index, and adoption evidence are under `docs/public-ai-governance/`.
-
-          Repository facts and explicit project requirements remain authoritative. The external baseline strengthens working discipline; it does not invent project facts or authorize production actions.
-
-          ## Project facts
-
-          - ASP.NET Core 9 / .NET 9 web application and API.
-          - C# application code with Entity Framework Core 9 and SQL Server.
-          - ASP.NET Core Identity plus JWT bearer authentication.
-          - Browser-delivered public, account, quiz, and administrative pages.
-          - Windows/IIS-oriented deployment tooling is tracked under `Deployment/`.
-          - The repository contains configuration, upload/import, SMTP, authentication, database, and deployment trust boundaries.
-
-          ## Working rules
-
-          - Preserve the declared .NET 9 / ASP.NET Core 9 boundary unless migration is explicitly in scope.
-          - Treat authentication, authorization, JWT signing, email verification, upload/import paths, SQL access, SMTP configuration, CORS, and administrative endpoints as security-sensitive.
-          - Keep secrets and environment-specific credentials out of source, logs, examples, and generated evidence.
-          - Validate authorization server-side. Browser state or hidden UI controls are not authorization.
-          - Treat database schema, public API behavior, configuration keys, deployment paths, and externally consumed DTOs as compatibility surfaces.
-          - Prefer focused changes. Do not combine unrelated cleanup with behavioral or deployment work.
-          - Record validation that actually ran. Missing environment-dependent checks are `NotRun` or `Blocked`, never implied passing.
-          - Do not claim production readiness from a successful build or repository-level standards composition.
-
-          ## Validation baseline
-
-          Use the repository's actual supported commands and report their real outcomes:
-
-          ```powershell
-          dotnet restore
-          dotnet build --configuration Release
-          dotnet test --configuration Release
-          ```
-
-          Add migration, database, browser, authorization, upload/import, deployment, and security checks when the changed scope requires them.
-
-          ## Precedence
-
-          More-specific `AGENTS.md` files may strengthen these requirements for their subtree. They must not silently weaken security, validation, evidence, or authorization requirements.
-          EOF
-
-          mkdir -p downstream/Deployment
-          cat > downstream/Deployment/AGENTS.md <<'EOF'
-          # Deployment Scope Instructions
-
-          These instructions apply under `Deployment/` in addition to the repository root `AGENTS.md`.
-
-          - Treat deployment scripts as privileged operational automation.
-          - Preserve audit-first and validation-first behavior. Installation, migration, service, firewall, certificate, SMTP, IIS, and SQL changes require explicit target and environment confirmation.
-          - Do not embed production passwords, JWT keys, SMTP secrets, private keys, or environment-specific credentials.
-          - Prefer preview, prerequisite, and smoke-test phases before consequential changes.
-          - Preserve rollback or recovery guidance for deployment changes. If rollback cannot be demonstrated, state the limitation.
-          - Do not infer successful IIS, SQL Server, certificate, DNS, or SMTP deployment from static repository validation.
-          - Production execution and production verification remain human-authorized environment operations unless explicitly delegated.
-          EOF
+          python standards/tools/generate-manifest/generate_manifest.py --root standards --name TheCertMaster --profile WEB_APPLICATION --language csharp --language dotnet --framework aspnet-core --operating-system windows-server --include-profile-required --manifest-output "$OUT/project-manifest.json" --format json > "$OUT/generate-manifest-result.json"
+          python standards/tools/compose-agents/compose_agents.py --root standards --manifest "$OUT/project-manifest.json" --output-dir "$OUT/standards-bundle" --no-copy-sources --format json > "$OUT/compose-result.json"
 
       - name: Capture downstream validation evidence
         working-directory: downstream
@@ -133,94 +54,13 @@ jobs:
           DOTNET_INFO_RC=$?
           dotnet restore > docs/public-ai-governance/dotnet-restore.txt 2>&1
           RESTORE_RC=$?
-          if [ "$RESTORE_RC" -eq 0 ]; then
-            dotnet build --configuration Release --no-restore > docs/public-ai-governance/dotnet-build.txt 2>&1
-            BUILD_RC=$?
-          else
-            BUILD_RC=125
-            printf 'NotRun: restore did not pass; build was not attempted.\n' > docs/public-ai-governance/dotnet-build.txt
-          fi
-          if [ "$BUILD_RC" -eq 0 ]; then
-            dotnet test --configuration Release --no-build > docs/public-ai-governance/dotnet-test.txt 2>&1
-            TEST_RC=$?
-          else
-            TEST_RC=125
-            printf 'NotRun: build did not pass; tests were not attempted.\n' > docs/public-ai-governance/dotnet-test.txt
-          fi
-          if command -v pwsh >/dev/null 2>&1; then
-            pwsh -NoProfile -Command '$errs=@(); Get-ChildItem Deployment -Recurse -Filter *.ps1 | ForEach-Object { [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$null,[ref]$parseErr); if($parseErr){$errs += $parseErr} }; if($errs.Count){$errs | Format-List | Out-String | Write-Error; exit 1}; "Deployment PowerShell parse: Passed"' > docs/public-ai-governance/powershell-parse.txt 2>&1
-            PS_RC=$?
-          else
-            PS_RC=125
-            printf 'Blocked: pwsh is not available on the validation runner.\n' > docs/public-ai-governance/powershell-parse.txt
-          fi
+          if [ "$RESTORE_RC" -eq 0 ]; then dotnet build --configuration Release --no-restore > docs/public-ai-governance/dotnet-build.txt 2>&1; BUILD_RC=$?; else BUILD_RC=125; printf 'NotRun: restore did not pass; build was not attempted.\n' > docs/public-ai-governance/dotnet-build.txt; fi
+          if [ "$BUILD_RC" -eq 0 ]; then dotnet test --configuration Release --no-build > docs/public-ai-governance/dotnet-test.txt 2>&1; TEST_RC=$?; else TEST_RC=125; printf 'NotRun: build did not pass; tests were not attempted.\n' > docs/public-ai-governance/dotnet-test.txt; fi
+          if command -v pwsh >/dev/null 2>&1; then pwsh -NoProfile -Command '$errs=@(); Get-ChildItem Deployment -Recurse -Filter *.ps1 | ForEach-Object { $t=$null; $e=$null; [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$t,[ref]$e); if($e){$errs += $e} }; if($errs.Count){$errs | Out-String | Write-Error; exit 1}; "Deployment PowerShell parse: Passed"' > docs/public-ai-governance/powershell-parse.txt 2>&1; PS_RC=$?; else PS_RC=125; printf 'Blocked: pwsh is not available on the validation runner.\n' > docs/public-ai-governance/powershell-parse.txt; fi
           printf 'DOTNET_INFO_RC=%s\nRESTORE_RC=%s\nBUILD_RC=%s\nTEST_RC=%s\nPS_RC=%s\n' "$DOTNET_INFO_RC" "$RESTORE_RC" "$BUILD_RC" "$TEST_RC" "$PS_RC" > docs/public-ai-governance/validation-status.env
           exit 0
 
-      - name: Write durable adoption record
-        working-directory: downstream
-        shell: bash
-        run: |
-          set -euo pipefail
-          source docs/public-ai-governance/validation-status.env
-          status_name() { if [ "$1" -eq 0 ]; then printf 'Passed'; elif [ "$1" -eq 125 ]; then printf 'NotRun/Blocked'; else printf 'Failed'; fi; }
-          cat > docs/public-ai-governance/ADOPTION_RECORD.md <<EOF
-          # Public-AI-Governance downstream adoption record
-
-          ## Pilot identity
-
-          - Downstream repository: \`AIAllTheThingz/TheCertMaster\`
-          - Pilot shape: application/service software
-          - Downstream source revision before adoption: \`4d93d1193a7a5f2c314726197b8c8198e5f37190\`
-          - Public Access Agents release: \`v0.10.0\`
-          - Public Access Agents source commit: \`83c73f3ab9a049ff2321d463164fcf98fb453a9c\`
-          - Adoption date: 2026-08-16
-
-          ## Selected composition
-
-          - Profile: \`WEB_APPLICATION\`
-          - Languages: \`csharp\`, \`dotnet\`
-          - Framework: \`aspnet-core\`
-          - Operating system boundary: \`windows-server\`
-          - Profile-required disciplines: generated by the published \`generate-manifest\` tool
-
-          The exact generated manifest is \`project-manifest.json\`. The traceable composition is under \`standards-bundle/\`; source files were not flattened or copied into this repository.
-
-          ## Commands exercised
-
-          - Published standards checkout at \`v0.10.0\`
-          - \`tools/generate-manifest/generate_manifest.py\`: Passed
-          - \`tools/compose-agents/compose_agents.py --no-copy-sources\`: Passed
-          - \`dotnet --info\`: $(status_name "$DOTNET_INFO_RC")
-          - \`dotnet restore\`: $(status_name "$RESTORE_RC")
-          - \`dotnet build --configuration Release --no-restore\`: $(status_name "$BUILD_RC")
-          - \`dotnet test --configuration Release --no-build\`: $(status_name "$TEST_RC")
-          - Deployment PowerShell parser check: $(status_name "$PS_RC")
-
-          Detailed command output is retained beside this record.
-
-          ## Adoption outcome
-
-          The standards could be selected and composed without repository-author context. A root \`AGENTS.md\` and a more-specific \`Deployment/AGENTS.md\` were tailored from real repository facts so browser/API application work and privileged deployment work have different scopes.
-
-          ## Friction and findings
-
-          1. **Adopter-specific tailoring:** the manifest can select C#/.NET, ASP.NET Core, Windows Server, and profile disciplines, but it cannot encode this project's exact .NET 9, ASP.NET Core 9, SQL Server, IIS, JWT, SMTP, and upload/import boundaries. Those facts correctly remain downstream instructions rather than being inferred by the standards tool.
-          2. **Adopter-specific tailoring:** the web-application profile requires broad disciplines such as accessibility, privacy, supply chain, CI/CD, and release engineering. For this browser/API application those are reasonable, but the adopting project still must decide which conditional database/API/integration overlays apply to a given change.
-          3. **No upstream defect identified:** manifest generation and traceable composition completed without a tool failure or ambiguous package slug.
-
-          ## Limitations
-
-          - This pilot does not perform an IIS deployment, SQL migration against a live server, certificate validation, SMTP delivery, browser accessibility exercise, or production authorization test.
-          - Successful composition does not certify security, correctness, deployment readiness, or production readiness.
-          - Any downstream validation recorded as Failed or NotRun/Blocked remains exactly that; it is not converted into a passing maturity claim.
-
-          ## Follow-up
-
-          No focused upstream defect was created from this pilot because the observed friction is project-specific tailoring already anticipated by the standards. The record is suitable as one representative downstream adoption input for Public-AI-Governance issue #41; it does not by itself satisfy stable-maturity promotion requirements.
-          EOF
-
-      - name: Commit pilot artifacts and remove one-shot workflow
+      - name: Commit machine evidence and remove one-shot workflow
         working-directory: downstream
         shell: bash
         run: |
@@ -228,7 +68,7 @@ jobs:
           rm -f .github/workflows/public-ai-governance-pilot.yml
           git config user.name "AIAllTheThingz"
           git config user.email "aiallthethingz@gmail.com"
-          git add AGENTS.md Deployment/AGENTS.md docs/public-ai-governance .github/workflows/public-ai-governance-pilot.yml
+          git add docs/public-ai-governance .github/workflows/public-ai-governance-pilot.yml
           git diff --cached --check
-          git commit -m "docs: adopt Public-AI-Governance v0.10.0 baseline"
+          git commit -m "test: capture Public-AI-Governance adoption evidence"
           git push origin HEAD:adoption/public-ai-governance-v0.10.0
