@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.1.0",
+  "name": "TheCertMaster",
+  "profile": "WEB_APPLICATION",
+  "languages": [
+    "csharp",
+    "dotnet"
+  ],
+  "disciplines": [
+    "application-security",
+    "architecture",
+    "testing",
+    "accessibility",
+    "privacy",
+    "observability",
+    "ci-cd",
+    "supply-chain",
+    "release-engineering",
+    "api-engineering",
+    "database",
+    "integration",
+    "sre",
+    "documentation"
+  ],
+  "frameworks": [
+    "aspnet-core"
+  ],
+  "operatingSystems": [
+    "windows-server"
+  ]
+}

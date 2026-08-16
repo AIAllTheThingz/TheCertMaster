@@ -1,0 +1,11 @@
+/home/runner/work/TheCertMaster/TheCertMaster/downstream/TheCertMaster.csproj : warning NU1902: Package 'MailKit' 4.14.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-9j88-vvj5-vhgr
+  TheCertMaster -> /home/runner/work/TheCertMaster/TheCertMaster/downstream/bin/Release/net9.0/TheCertMaster.dll
+  TheCertMaster.Tests -> /home/runner/work/TheCertMaster/TheCertMaster/downstream/TheCertMaster.Tests/bin/Release/net9.0/TheCertMaster.Tests.dll
+
+Build succeeded.
+
+/home/runner/work/TheCertMaster/TheCertMaster/downstream/TheCertMaster.csproj : warning NU1902: Package 'MailKit' 4.14.1 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-9j88-vvj5-vhgr
+    1 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:15.85
