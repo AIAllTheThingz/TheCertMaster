@@ -746,6 +746,137 @@ public class FlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task QuizSubmission_PreservesFirstDuplicateAnswer_DeduplicatesSelections_AndGradesUnansweredFalse()
+    {
+        var client = _factory.CreateClient();
+        var token = await _factory.LoginAsAdminAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        Guid quizId;
+        Guid singleQuestionId;
+        Guid multipleQuestionId;
+        Guid unansweredQuestionId;
+        Guid singleCorrectId;
+        Guid singleIncorrectId;
+        Guid multipleCorrectAId;
+        Guid multipleCorrectBId;
+
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<QuizDbContext>();
+            var quiz = new Quiz
+            {
+                Title = "Grading Edge Case Quiz",
+                Category = "Security"
+            };
+
+            var singleQuestion = new Question
+            {
+                Text = "Which protocol secures web traffic?",
+                OrderIndex = 1,
+                AllowMultiple = false
+            };
+            var singleCorrect = new Answer { Text = "HTTPS", IsCorrect = true, OrderIndex = 1 };
+            var singleIncorrect = new Answer { Text = "FTP", IsCorrect = false, OrderIndex = 2 };
+            singleQuestion.Answers.Add(singleCorrect);
+            singleQuestion.Answers.Add(singleIncorrect);
+
+            var multipleQuestion = new Question
+            {
+                Text = "Which are secure transport protocols?",
+                OrderIndex = 2,
+                AllowMultiple = true
+            };
+            var multipleCorrectA = new Answer { Text = "HTTPS", IsCorrect = true, OrderIndex = 1 };
+            var multipleCorrectB = new Answer { Text = "SSH", IsCorrect = true, OrderIndex = 2 };
+            multipleQuestion.Answers.Add(multipleCorrectA);
+            multipleQuestion.Answers.Add(multipleCorrectB);
+            multipleQuestion.Answers.Add(new Answer { Text = "FTP", IsCorrect = false, OrderIndex = 3 });
+
+            var unansweredQuestion = new Question
+            {
+                Text = "Which protocol is intentionally left unanswered?",
+                OrderIndex = 3,
+                AllowMultiple = false
+            };
+            unansweredQuestion.Answers.Add(new Answer { Text = "HTTPS", IsCorrect = true, OrderIndex = 1 });
+
+            quiz.Questions.Add(singleQuestion);
+            quiz.Questions.Add(multipleQuestion);
+            quiz.Questions.Add(unansweredQuestion);
+            db.Quizzes.Add(quiz);
+            await db.SaveChangesAsync();
+
+            quizId = quiz.Id;
+            singleQuestionId = singleQuestion.Id;
+            multipleQuestionId = multipleQuestion.Id;
+            unansweredQuestionId = unansweredQuestion.Id;
+            singleCorrectId = singleCorrect.Id;
+            singleIncorrectId = singleIncorrect.Id;
+            multipleCorrectAId = multipleCorrectA.Id;
+            multipleCorrectBId = multipleCorrectB.Id;
+        }
+
+        var deliveredQuestionIds = new[] { singleQuestionId, multipleQuestionId, unansweredQuestionId, unansweredQuestionId };
+        var answers = new object[]
+        {
+            new { QuestionId = singleQuestionId, SelectedAnswerIds = new[] { singleIncorrectId } },
+            new { QuestionId = singleQuestionId, SelectedAnswerIds = new[] { singleCorrectId } },
+            new { QuestionId = multipleQuestionId, SelectedAnswerIds = new[] { multipleCorrectBId, multipleCorrectAId, multipleCorrectAId } }
+        };
+        var submitPayload = JsonSerializer.Serialize(new { deliveredQuestionIds, Answers = answers });
+
+        using var response = await client.PostAsync(
+            $"/api/quiz/{quizId}/submit",
+            new StringContent(submitPayload, Encoding.UTF8, "application/json"));
+        response.EnsureSuccessStatusCode();
+
+        using var resultDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var result = resultDoc.RootElement;
+        Assert.Equal(3, result.GetProperty("TotalQuestions").GetInt32());
+        Assert.Equal(1, result.GetProperty("CorrectCount").GetInt32());
+        Assert.False(result.GetProperty("Passed").GetBoolean());
+
+        var questionResults = result.GetProperty("Questions").EnumerateArray()
+            .ToDictionary(q => q.GetProperty("QuestionId").GetGuid());
+        Assert.False(questionResults[singleQuestionId].GetProperty("IsCorrect").GetBoolean());
+        Assert.Equal(new[] { singleIncorrectId }, questionResults[singleQuestionId]
+            .GetProperty("SelectedAnswerIds").EnumerateArray().Select(id => id.GetGuid()));
+        Assert.True(questionResults[multipleQuestionId].GetProperty("IsCorrect").GetBoolean());
+        Assert.Equal(new[] { multipleCorrectAId, multipleCorrectBId }.OrderBy(id => id), questionResults[multipleQuestionId]
+            .GetProperty("SelectedAnswerIds").EnumerateArray().Select(id => id.GetGuid()));
+        Assert.False(questionResults[unansweredQuestionId].GetProperty("IsCorrect").GetBoolean());
+        Assert.Empty(questionResults[unansweredQuestionId].GetProperty("SelectedAnswerIds").EnumerateArray());
+
+        using var regularAllQuestionsResponse = await client.PostAsync(
+            $"/api/quiz/{quizId}/submit",
+            new StringContent(JsonSerializer.Serialize(new { Answers = answers }), Encoding.UTF8, "application/json"));
+        regularAllQuestionsResponse.EnsureSuccessStatusCode();
+        using var regularAllQuestionsDoc = JsonDocument.Parse(await regularAllQuestionsResponse.Content.ReadAsStringAsync());
+        Assert.Equal(3, regularAllQuestionsDoc.RootElement.GetProperty("TotalQuestions").GetInt32());
+
+        using var customResponse = await client.PostAsync(
+            "/api/quiz/custom/submit",
+            new StringContent(JsonSerializer.Serialize(new
+            {
+                quizTitle = "Grading Edge Case Custom Quiz",
+                selectedCategories = new[] { "Security" },
+                deliveredQuestionIds,
+                Answers = answers
+            }), Encoding.UTF8, "application/json"));
+        customResponse.EnsureSuccessStatusCode();
+        using var customResultDoc = JsonDocument.Parse(await customResponse.Content.ReadAsStringAsync());
+        Assert.Equal(Guid.Empty, customResultDoc.RootElement.GetProperty("QuizId").GetGuid());
+        Assert.Equal(3, customResultDoc.RootElement.GetProperty("TotalQuestions").GetInt32());
+        Assert.Equal(1, customResultDoc.RootElement.GetProperty("CorrectCount").GetInt32());
+
+        using var emptyCustomResponse = await client.PostAsync(
+            "/api/quiz/custom/submit",
+            new StringContent(JsonSerializer.Serialize(new { deliveredQuestionIds = Array.Empty<Guid>(), Answers = Array.Empty<object>() }), Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.BadRequest, emptyCustomResponse.StatusCode);
+    }
+
+    [Fact]
     public async Task CustomCategoryQuiz_DefaultTwentyPerCategory_ReturnsTwentyFromEachSelectedCategory()
     {
         var client = _factory.CreateClient();

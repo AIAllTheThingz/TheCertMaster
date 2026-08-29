@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using TheCertMaster.Data;
-using System.Globalization;
 using System.Text.Json;
 using System.Text;
 using System.IO.Compression;
@@ -220,23 +219,6 @@ namespace TheCertMaster.Services
                 || ext.Equals(".svg", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string EnsureUniqueFileName(string directory, string desiredFileName)
-        {
-            var safe = Path.GetFileName(desiredFileName);
-            var baseName = Path.GetFileNameWithoutExtension(safe);
-            var ext = Path.GetExtension(safe);
-
-            var candidate = safe;
-            int i = 1;
-            while (File.Exists(Path.Combine(directory, candidate)))
-            {
-                candidate = $"{baseName}_{i}{ext}";
-                i++;
-            }
-
-            return candidate;
-        }
-
         private static IEnumerable<string[]> ReadCsvRecords(string filePath)
         {
             using var sr = new StreamReader(filePath);
@@ -418,7 +400,7 @@ namespace TheCertMaster.Services
                     throw new InvalidOperationException($"Question '{example.Key.QuestionText}' in quiz '{example.Key.QuizTitle}' references multiple image keys. Use one image key per question.");
                 }
 
-                var grouped = rows.GroupBy(r => new { Title = r.QuizTitle, Category = NormalizeCategory(r.Category) });
+                var grouped = rows.GroupBy(r => new { Title = r.QuizTitle, Category = CategoryNormalizer.Normalize(r.Category) });
                 var packageId = TryGetPackageIdFromImportedFile(fileName);
                 var packageImagesDir = GetPackageImagesDirectory(packageId);
 
@@ -584,16 +566,6 @@ namespace TheCertMaster.Services
 
             result.ImageEntries.AddRange(supportedImageEntries);
             return result;
-        }
-
-        private static string NormalizeCategory(string? category)
-        {
-            if (string.IsNullOrWhiteSpace(category))
-                return "Uncategorized";
-
-            var collapsed = System.Text.RegularExpressions.Regex.Replace(category.Trim(), @"\s+", " ");
-            var lower = collapsed.ToLowerInvariant();
-            return System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(lower);
         }
 
         private string GetPrivateUploadsRoot()

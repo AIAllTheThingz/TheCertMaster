@@ -2,6 +2,7 @@
 param(
     [string]$DeploymentRoot = 'C:\Deployment',
     [string]$PublishedSitePath = '',
+    [string]$SiteName = 'Default Web Site',
     [string]$SettingsFile = '',
     [string]$SmtpHost = 'localhost',
     [int]$SmtpPort = 25,
@@ -116,7 +117,12 @@ function Ensure-SmtpFeatureInstalled {
 }
 
 if ([string]::IsNullOrWhiteSpace($PublishedSitePath)) {
-    $PublishedSitePath = Join-Path $DeploymentRoot 'publish'
+    Import-Module WebAdministration
+    $site = Get-Website -Name $SiteName -ErrorAction Stop
+    $PublishedSitePath = [string]$site.PhysicalPath
+    if ([string]::IsNullOrWhiteSpace($PublishedSitePath)) {
+        throw "IIS site '$SiteName' does not have a published site path."
+    }
 }
 
 if ([string]::IsNullOrWhiteSpace($SettingsFile)) {

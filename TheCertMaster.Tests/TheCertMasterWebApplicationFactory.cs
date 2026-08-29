@@ -1,10 +1,7 @@
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +19,6 @@ public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>
     private const string TestAdminPassword = "ChangeThisLocalDevPassword!2026";
     private readonly FakeEmailService _fakeEmailService = new();
     private readonly string _databaseName = $"TheCertMasterTests_{Guid.NewGuid():N}";
-    private readonly IDictionary<string, string?>? _overrides;
     private string ConnectionString
     {
         get
@@ -47,13 +43,7 @@ public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>
     }
 
     public TheCertMasterWebApplicationFactory()
-        : this(null)
     {
-    }
-
-    private TheCertMasterWebApplicationFactory(IDictionary<string, string?>? overrides)
-    {
-        _overrides = overrides;
         Environment.SetEnvironmentVariable("Jwt__Key", "Integration_Test_Jwt_Key_123456789012345");
         Environment.SetEnvironmentVariable("Jwt__Issuer", "TheCertMaster-Tests");
         Environment.SetEnvironmentVariable("Jwt__Audience", "TheCertMaster-Tests-Users");
@@ -61,20 +51,9 @@ public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("SampleData__Enabled", "false");
     }
 
-    public static TheCertMasterWebApplicationFactory CreateWithOverrides(IDictionary<string, string?> overrides)
-        => new(overrides);
-
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
-        if (_overrides is not null && _overrides.Count > 0)
-        {
-            builder.ConfigureAppConfiguration((_, config) =>
-            {
-                config.AddInMemoryCollection(_overrides);
-            });
-        }
-
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IEmailService>();
@@ -124,19 +103,6 @@ public class TheCertMasterWebApplicationFactory : WebApplicationFactory<Program>
     }
 
     public FakeEmailService EmailService => _fakeEmailService;
-
-    public async Task<string> CreateImportFileAsync(string contents, string fileName)
-    {
-        var path = Path.Combine(GetUploadsDirectory(), fileName);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        await File.WriteAllTextAsync(path, contents, Encoding.UTF8);
-        return fileName;
-    }
-
-    public string GetUploadsDirectory()
-    {
-        return Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "App_Data", "uploads");
-    }
 
     public async Task EnsureDatabaseSeededAsync()
     {

@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TheCertMaster.Data;
-using System.Globalization;
-using System.Text.RegularExpressions;
+using TheCertMaster.Services;
 
 namespace TheCertMaster.Controllers
 {
@@ -26,7 +25,7 @@ namespace TheCertMaster.Controllers
                 .ToListAsync();
 
             var categories = raw
-                .Select(NormalizeCategory)
+                .Select(CategoryNormalizer.Normalize)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(c => c)
                 .ToList();
@@ -35,17 +34,6 @@ namespace TheCertMaster.Controllers
                 categories.Add("Uncategorized");
 
             return Ok(categories);
-        }
-
-        private static string NormalizeCategory(string? input)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-                return "Uncategorized";
-
-            var s = Regex.Replace(input.Trim(), "\\s+", " ");
-            var ti = CultureInfo.InvariantCulture.TextInfo;
-            s = ti.ToTitleCase(s.ToLowerInvariant());
-            return s;
         }
     }
 }

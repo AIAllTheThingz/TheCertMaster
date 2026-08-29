@@ -2,8 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using TheCertMaster.Data;
 using TheCertMaster.DTO;
 using TheCertMaster.Models;
-using System.Globalization;
-using System.Text.RegularExpressions;
 
 namespace TheCertMaster.Services
 {
@@ -72,11 +70,11 @@ namespace TheCertMaster.Services
                 .ToListAsync();
 
             questions = questions
-                .Where(q => normalizedCategories.Contains(NormalizeCategory(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase))
+                .Where(q => normalizedCategories.Contains(CategoryNormalizer.Normalize(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
             var counts = questions
-                .GroupBy(q => NormalizeCategory(q.Quiz?.Category))
+                .GroupBy(q => CategoryNormalizer.Normalize(q.Quiz?.Category))
                 .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
 
             return new CustomQuizAvailabilityDto
@@ -101,7 +99,7 @@ namespace TheCertMaster.Services
                 .ToListAsync();
 
             questions = questions
-                .Where(q => normalizedCategories.Contains(NormalizeCategory(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase))
+                .Where(q => normalizedCategories.Contains(CategoryNormalizer.Normalize(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
             if (questions.Count == 0)
@@ -113,7 +111,7 @@ namespace TheCertMaster.Services
                 .ToDictionary(
                     category => category,
                     category => questions
-                        .Where(q => string.Equals(NormalizeCategory(q.Quiz?.Category), category, StringComparison.OrdinalIgnoreCase))
+                        .Where(q => string.Equals(CategoryNormalizer.Normalize(q.Quiz?.Category), category, StringComparison.OrdinalIgnoreCase))
                         .OrderBy(_ => _rng.Next())
                         .ToList(),
                     StringComparer.OrdinalIgnoreCase);
@@ -193,20 +191,11 @@ namespace TheCertMaster.Services
         {
             return categories
                 .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Select(NormalizeCategory)
+                .Select(CategoryNormalizer.Normalize)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(c => c)
                 .ToList();
         }
 
-        private static string NormalizeCategory(string? input)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-                return "Uncategorized";
-
-            var s = Regex.Replace(input.Trim(), "\\s+", " ");
-            var ti = CultureInfo.InvariantCulture.TextInfo;
-            return ti.ToTitleCase(s.ToLowerInvariant());
-        }
     }
 }

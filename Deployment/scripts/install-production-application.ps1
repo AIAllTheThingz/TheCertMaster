@@ -65,33 +65,124 @@ function Ensure-Directory {
     }
 }
 
-function Get-SourceRoot {
+function Get-ReleaseArtifact {
     param([string]$DeploymentRootPath)
 
-    $candidates = @(
-        (Split-Path -Path $PSScriptRoot -Parent),
-        (Join-Path $DeploymentRootPath 'source'),
-        $DeploymentRootPath
-    )
+    if (-not (Test-Path -LiteralPath $DeploymentRootPath -PathType Container)) {
+        throw "Deployment root was not found: $DeploymentRootPath"
+    }
 
-    foreach ($candidate in $candidates | Select-Object -Unique) {
-        if ([string]::IsNullOrWhiteSpace($candidate)) {
-            continue
+    $artifactRoot = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $DeploymentRootPath).Path).TrimEnd('\', '/')
+    $scriptArtifactRoot = [System.IO.Path]::GetFullPath((Split-Path -Path $PSScriptRoot -Parent)).TrimEnd('\', '/')
+    if (-not [string]::Equals($artifactRoot, $scriptArtifactRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Run this installer from the scripts directory in the extracted release artifact.'
+    }
+
+    $manifestPath = Join-Path $artifactRoot 'artifact-manifest.json'
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw "Release artifact manifest was not found: $manifestPath"
+    }
+
+    try {
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    }
+    catch {
+        throw "Release artifact manifest is invalid: $manifestPath"
+    }
+
+    $commit = [string]$manifest.commit
+    if ($commit -notmatch '^[0-9a-fA-F]{40}$') {
+        throw 'Release artifact manifest does not contain a valid commit SHA.'
+    }
+
+    $manifestProperties = @($manifest.files.PSObject.Properties)
+    if ($manifestProperties.Count -eq 0) {
+        throw 'Release artifact manifest does not contain file hashes.'
+    }
+
+    $artifactRootWithSeparator = $artifactRoot + [System.IO.Path]::DirectorySeparatorChar
+    $validatedPaths = @()
+    foreach ($entry in $manifestProperties) {
+        $relativePath = [string]$entry.Name
+        $expectedHash = [string]$entry.Value
+        if ([System.IO.Path]::IsPathRooted($relativePath) -or $expectedHash -notmatch '^[0-9a-fA-F]{64}$') {
+            throw "Release artifact manifest has an invalid entry: $relativePath"
         }
 
-        $projectPath = Join-Path $candidate 'TheCertMaster.csproj'
-        if (Test-Path -LiteralPath $projectPath) {
-            return $candidate
+        $filePath = [System.IO.Path]::GetFullPath((Join-Path $artifactRoot $relativePath))
+        if (-not $filePath.StartsWith($artifactRootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase) -or
+            -not (Test-Path -LiteralPath $filePath -PathType Leaf)) {
+            throw "Release artifact is incomplete: $relativePath"
+        }
+
+        $file = Get-Item -LiteralPath $filePath -Force
+        if (($file.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "Release artifact contains a reparse-point file: $relativePath"
+        }
+
+        $actualHash = (Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash
+        if (-not [string]::Equals($actualHash, $expectedHash, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Release artifact integrity check failed for $relativePath."
+        }
+
+        $validatedPaths += $relativePath.Replace('/', '\')
+    }
+
+    foreach ($requiredPath in @('publish\TheCertMaster.dll', 'publish\web.config', 'bootstrapper\TheCertMaster.Bootstrapper.dll', 'migrations\efbundle.exe', 'source\TheCertMaster.csproj', 'source\commit-manifest.json')) {
+        if ($validatedPaths -notcontains $requiredPath) {
+            throw "Release artifact manifest is missing required file: $requiredPath"
         }
     }
 
-    throw "Could not locate TheCertMaster.csproj. Copy the application source into the Deployment package before running this installer."
+    foreach ($payloadDirectory in @('publish', 'bootstrapper', 'migrations')) {
+        $payloadPath = Join-Path $artifactRoot $payloadDirectory
+        if (-not (Test-Path -LiteralPath $payloadPath -PathType Container)) {
+            throw "Release artifact payload directory is missing: $payloadDirectory"
+        }
+
+        Get-ChildItem -LiteralPath $payloadPath -Force -Recurse | ForEach-Object {
+            if (($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw "Release artifact contains a reparse-point payload: $($_.FullName)"
+            }
+
+            if (-not $_.PSIsContainer) {
+                $payloadRelativePath = $_.FullName.Substring($artifactRootWithSeparator.Length).Replace('/', '\')
+                if ($validatedPaths -notcontains $payloadRelativePath) {
+                    throw "Release artifact contains an unexpected payload file: $payloadRelativePath"
+                }
+            }
+        }
+    }
+
+    try {
+        $sourceManifest = Get-Content -LiteralPath (Join-Path $artifactRoot 'source\commit-manifest.json') -Raw | ConvertFrom-Json
+    }
+    catch {
+        throw 'Source commit manifest is invalid.'
+    }
+
+    if (-not [string]::Equals([string]$sourceManifest.commit, $commit, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Source commit manifest does not match the release artifact manifest.'
+    }
+
+    return [pscustomobject]@{
+        Root = $artifactRoot
+        Commit = $commit.ToLowerInvariant()
+        PublishPath = Join-Path $artifactRoot 'publish'
+        BootstrapperPath = Join-Path $artifactRoot 'bootstrapper\TheCertMaster.Bootstrapper.dll'
+        MigrationBundlePath = Join-Path $artifactRoot 'migrations\efbundle.exe'
+    }
 }
 
 function Ensure-DotNetInstalled {
     $dotnetExe = Join-Path $env:ProgramFiles 'dotnet\dotnet.exe'
     if (-not (Test-Path -LiteralPath $dotnetExe)) {
         throw '.NET was not found. Run ensure-server-prerequisites.ps1 first.'
+    }
+
+    $runtimes = & $dotnetExe --list-runtimes
+    if ($LASTEXITCODE -ne 0 -or -not ($runtimes | Where-Object { $_ -match '^Microsoft\.AspNetCore\.App 9\.' })) {
+        throw '.NET 9 ASP.NET Core runtime was not found. Run ensure-server-prerequisites.ps1 first.'
     }
 
     return $dotnetExe
@@ -110,21 +201,10 @@ function Initialize-DotNetEnvironment {
     $env:DOTNET_ROOT = $dotnetRoot
 }
 
-function Ensure-DotNetEfInstalled {
-    param([string]$DeploymentRootPath)
-
-    $dotnetEfExe = Join-Path (Join-Path $DeploymentRootPath 'tools') 'dotnet-ef.exe'
-    if (-not (Test-Path -LiteralPath $dotnetEfExe)) {
-        throw "dotnet-ef was not found at $dotnetEfExe. Run ensure-server-prerequisites.ps1 first."
-    }
-
-    return $dotnetEfExe
-}
-
 function Invoke-BootstrapAdminTool {
     param(
         [string]$DotNetExe,
-        [string]$SourceRoot,
+        [string]$BootstrapperPath,
         [string]$ConnectionStringToUse,
         [string]$Email,
         [string]$Password,
@@ -136,7 +216,7 @@ function Invoke-BootstrapAdminTool {
         return
     }
 
-    & $DotNetExe run --project (Join-Path $SourceRoot 'TheCertMaster.Bootstrapper\TheCertMaster.Bootstrapper.csproj') -- `
+    & $DotNetExe $BootstrapperPath `
         --connection $ConnectionStringToUse `
         --email $Email `
         --password $Password `
@@ -157,20 +237,6 @@ function Ensure-IisModule {
     }
 
     return $appCmdExe
-}
-
-function Publish-Application {
-    param(
-        [string]$DotNetExe,
-        [string]$SourceRoot,
-        [string]$PublishPath
-    )
-
-    Ensure-Directory -Path $PublishPath
-    & $DotNetExe publish (Join-Path $SourceRoot 'TheCertMaster.csproj') -c Release -o $PublishPath
-    if ($LASTEXITCODE -ne 0) {
-        throw 'dotnet publish failed.'
-    }
 }
 
 function Ensure-AppPool {
@@ -202,12 +268,11 @@ function Ensure-SiteConfiguration {
     if (Test-Path -LiteralPath ("IIS:\Sites\" + $SiteNameToUse)) {
         Set-ItemProperty ("IIS:\Sites\" + $SiteNameToUse) -Name physicalPath -Value $PublishPath
         Set-ItemProperty ("IIS:\Sites\" + $SiteNameToUse) -Name applicationPool -Value $PoolName
-    }
-    else {
-        New-Website -Name $SiteNameToUse -Port $HttpBindingPort -PhysicalPath $PublishPath -ApplicationPool $PoolName | Out-Null
+        return $false
     }
 
-    Start-WebSite -Name $SiteNameToUse | Out-Null
+    New-Website -Name $SiteNameToUse -Port $HttpBindingPort -PhysicalPath $PublishPath -ApplicationPool $PoolName | Out-Null
+    return $true
 }
 
 function Get-TargetHostName {
@@ -301,7 +366,8 @@ function Ensure-SiteBindings {
 function Stop-SiteAndPoolIfPresent {
     param(
         [string]$SiteNameToUse,
-        [string]$PoolName
+        [string]$PoolName,
+        [string]$PreviousPoolName = ''
     )
 
     Import-Module WebAdministration
@@ -313,10 +379,12 @@ function Stop-SiteAndPoolIfPresent {
         }
     }
 
-    if (Test-Path -LiteralPath ("IIS:\AppPools\" + $PoolName)) {
-        $appPoolState = Get-WebAppPoolState -Name $PoolName
-        if ($appPoolState -and $appPoolState.Value -ne 'Stopped') {
-            Stop-WebAppPool -Name $PoolName | Out-Null
+    foreach ($poolNameToStop in @($PoolName, $PreviousPoolName) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique) {
+        if (Test-Path -LiteralPath ("IIS:\AppPools\" + $poolNameToStop)) {
+            $appPoolState = Get-WebAppPoolState -Name $poolNameToStop
+            if ($appPoolState -and $appPoolState.Value -ne 'Stopped') {
+                Stop-WebAppPool -Name $poolNameToStop | Out-Null
+            }
         }
     }
 }
@@ -330,6 +398,160 @@ function Start-SiteAndPool {
     Import-Module WebAdministration
     Start-WebAppPool -Name $PoolName | Out-Null
     Start-WebSite -Name $SiteNameToUse | Out-Null
+}
+
+function Get-SiteDeploymentState {
+    param(
+        [string]$SiteNameToUse,
+        [string]$FallbackPoolName
+    )
+
+    Import-Module WebAdministration
+    $state = [pscustomobject]@{
+        SiteExists = $false
+        PhysicalPath = ''
+        ApplicationPool = $FallbackPoolName
+        SiteWasRunning = $false
+        PoolWasRunning = $false
+    }
+
+    if (-not (Test-Path -LiteralPath ("IIS:\Sites\" + $SiteNameToUse))) {
+        return $state
+    }
+
+    $site = Get-Website -Name $SiteNameToUse
+    $state.SiteExists = $true
+    $state.PhysicalPath = [string]$site.physicalPath
+    $state.ApplicationPool = [string]$site.applicationPool
+    $state.SiteWasRunning = $site.State -ne 'Stopped'
+
+    if (Test-Path -LiteralPath ("IIS:\AppPools\" + $state.ApplicationPool)) {
+        $poolState = Get-WebAppPoolState -Name $state.ApplicationPool
+        $state.PoolWasRunning = $poolState.Value -ne 'Stopped'
+    }
+
+    return $state
+}
+
+function Restore-SiteDeploymentState {
+    param(
+        [psobject]$State,
+        [string]$SiteNameToUse,
+        [switch]$SiteWasCreated
+    )
+
+    Import-Module WebAdministration
+    if ($SiteWasCreated) {
+        if (Test-Path -LiteralPath ("IIS:\Sites\" + $SiteNameToUse)) {
+            Stop-WebSite -Name $SiteNameToUse -ErrorAction SilentlyContinue | Out-Null
+            Remove-Website -Name $SiteNameToUse
+        }
+
+        return
+    }
+
+    if (-not $State.SiteExists) {
+        return
+    }
+
+    if (Test-Path -LiteralPath ("IIS:\Sites\" + $SiteNameToUse)) {
+        Stop-WebSite -Name $SiteNameToUse -ErrorAction SilentlyContinue | Out-Null
+        Set-ItemProperty ("IIS:\Sites\" + $SiteNameToUse) -Name physicalPath -Value $State.PhysicalPath
+        Set-ItemProperty ("IIS:\Sites\" + $SiteNameToUse) -Name applicationPool -Value $State.ApplicationPool
+    }
+
+    if ($State.PoolWasRunning -and (Test-Path -LiteralPath ("IIS:\AppPools\" + $State.ApplicationPool))) {
+        Start-WebAppPool -Name $State.ApplicationPool | Out-Null
+    }
+
+    if ($State.SiteWasRunning) {
+        Start-WebSite -Name $SiteNameToUse | Out-Null
+    }
+}
+
+function Copy-ArtifactPublish {
+    param(
+        [string]$ArtifactPublishPath,
+        [string]$ReleasePublishPath
+    )
+
+    Ensure-Directory -Path $ReleasePublishPath
+    Get-ChildItem -LiteralPath $ArtifactPublishPath -Force | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination $ReleasePublishPath -Force -Recurse
+    }
+}
+
+function Copy-RuntimeState {
+    param(
+        [string]$ExistingPublishPath,
+        [string]$ReleasePublishPath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($ExistingPublishPath) -or
+        -not (Test-Path -LiteralPath $ExistingPublishPath) -or
+        [string]::Equals($ExistingPublishPath, $ReleasePublishPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return
+    }
+
+    foreach ($relativePath in @('App_Data', 'wwwroot\uploads\images')) {
+        $sourcePath = Join-Path $ExistingPublishPath $relativePath
+        if (-not (Test-Path -LiteralPath $sourcePath)) {
+            continue
+        }
+
+        $destinationPath = Join-Path $ReleasePublishPath $relativePath
+        Ensure-Directory -Path $destinationPath
+        Get-ChildItem -LiteralPath $sourcePath -Force | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $destinationPath -Force -Recurse
+        }
+    }
+}
+
+function Invoke-MigrationBundle {
+    param(
+        [string]$MigrationBundlePath,
+        [string]$PublishPath,
+        [string]$ConnectionStringToUse,
+        [string]$JwtKeyToUse,
+        [string]$JwtIssuerToUse,
+        [string]$JwtAudienceToUse,
+        [string]$PublicBaseUrlToUse
+    )
+
+    $environmentValues = @{
+        'ASPNETCORE_ENVIRONMENT' = 'Production'
+        'ConnectionStrings__DefaultConnection' = $ConnectionStringToUse
+        'Jwt__Key' = $JwtKeyToUse
+        'Jwt__Issuer' = $JwtIssuerToUse
+        'Jwt__Audience' = $JwtAudienceToUse
+        'PublicApp__BaseUrl' = $PublicBaseUrlToUse
+        'Cors__AllowedOrigins__0' = $PublicBaseUrlToUse
+    }
+    $previousValues = @{}
+    $pushedLocation = $false
+
+    try {
+        foreach ($entry in $environmentValues.GetEnumerator()) {
+            $previousValues[$entry.Key] = [Environment]::GetEnvironmentVariable($entry.Key, 'Process')
+            [Environment]::SetEnvironmentVariable($entry.Key, [string]$entry.Value, 'Process')
+        }
+
+        Push-Location $PublishPath
+        $pushedLocation = $true
+        & $MigrationBundlePath --connection $ConnectionStringToUse
+        if ($LASTEXITCODE -ne 0) {
+            throw 'The bundled EF Core migration failed.'
+        }
+    }
+    finally {
+        if ($pushedLocation) {
+            Pop-Location
+        }
+
+        foreach ($entry in $previousValues.GetEnumerator()) {
+            [Environment]::SetEnvironmentVariable($entry.Key, $entry.Value, 'Process')
+        }
+    }
 }
 
 function Set-WebConfigEnvironmentVariables {
@@ -510,41 +732,40 @@ if ($CorsOrigins.Count -eq 0) {
 }
 
 $effectiveHostName = Get-TargetHostName -ConfiguredHostName $HostName -BaseUrl $PublicBaseUrl
-$effectiveCertificateThumbprint = Ensure-HttpsCertificate -RequestedThumbprint $CertificateThumbprint -DnsName $effectiveHostName -AllowCreateSelfSigned:$CreateSelfSignedCertificate
 
-Write-Step 'Resolving source and tool locations'
-$sourceRoot = Get-SourceRoot -DeploymentRootPath $DeploymentRoot
-$publishPath = Join-Path $DeploymentRoot 'publish'
+Write-Step 'Validating the immutable release artifact'
+$artifact = Get-ReleaseArtifact -DeploymentRootPath $DeploymentRoot
 $dotnetExe = Ensure-DotNetInstalled
 Initialize-DotNetEnvironment -DotNetExe $dotnetExe
-$dotnetEfExe = Ensure-DotNetEfInstalled -DeploymentRootPath $DeploymentRoot
 $appCmdExe = Ensure-IisModule
+$deploymentState = Get-SiteDeploymentState -SiteNameToUse $SiteName -FallbackPoolName $AppPoolName
+$deploymentPoolNames = @($deploymentState.ApplicationPool, $AppPoolName) |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+    Select-Object -Unique
+$otherSitesUsingDeploymentPools = @(Get-Website | Where-Object {
+    -not [string]::Equals([string]$_.Name, $SiteName, [System.StringComparison]::OrdinalIgnoreCase) -and
+    $deploymentPoolNames -contains [string]$_.applicationPool
+})
+if ($otherSitesUsingDeploymentPools.Count -gt 0) {
+    $otherSiteNames = ($otherSitesUsingDeploymentPools | ForEach-Object { $_.Name }) -join ', '
+    throw "The current or requested application pool is shared by other IIS site(s): $otherSiteNames. Assign a dedicated application pool and retry."
+}
+$releaseRoot = Join-Path (Join-Path $artifact.Root 'releases') "$($artifact.Commit)-$([Guid]::NewGuid().ToString('N'))"
+$publishPath = Join-Path $releaseRoot 'publish'
 
-Write-Step 'Stopping IIS site and app pool if they already exist'
-Stop-SiteAndPoolIfPresent -SiteNameToUse $SiteName -PoolName $AppPoolName
+Write-Step 'Staging the prebuilt application'
+Copy-ArtifactPublish -ArtifactPublishPath $artifact.PublishPath -ReleasePublishPath $publishPath
 
-Write-Step 'Publishing the application into the Deployment root'
-Publish-Application -DotNetExe $dotnetExe -SourceRoot $sourceRoot -PublishPath $publishPath
-
-Write-Step 'Creating and configuring the IIS application pool'
-Ensure-AppPool -AppCmdExe $appCmdExe -PoolName $AppPoolName
-
-Write-Step 'Preparing runtime folders and permissions'
 $appDataPath = Join-Path $publishPath 'App_Data'
 $uploadsPath = Join-Path $appDataPath 'uploads'
 $keysPath = Join-Path $appDataPath 'keys'
 $imageUploadPath = Join-Path $publishPath 'wwwroot\uploads\images'
-
 Ensure-Directory -Path $appDataPath
 Ensure-Directory -Path $uploadsPath
 Ensure-Directory -Path $keysPath
 Ensure-Directory -Path $imageUploadPath
 
-Grant-ApplicationAccess -Path $publishPath -AppPoolName $AppPoolName -Rights ([System.Security.AccessControl.FileSystemRights]::ReadAndExecute)
-Grant-ApplicationAccess -Path $appDataPath -AppPoolName $AppPoolName -Rights ([System.Security.AccessControl.FileSystemRights]::Modify)
-Grant-ApplicationAccess -Path $imageUploadPath -AppPoolName $AppPoolName -Rights ([System.Security.AccessControl.FileSystemRights]::Modify)
-
-Write-Step 'Writing production environment variables into the published web.config'
+Write-Step 'Writing production environment variables into the staged web.config'
 $environmentVariables = @{
     'ASPNETCORE_ENVIRONMENT' = 'Production'
     'ConnectionStrings__DefaultConnection' = $ConnectionString
@@ -578,53 +799,88 @@ for ($i = 0; $i -lt $CorsOrigins.Count; $i++) {
 
 Set-WebConfigEnvironmentVariables -WebConfigPath (Join-Path $publishPath 'web.config') -EnvironmentVariables $environmentVariables
 
-Write-Step 'Pointing the IIS site root at the Deployment publish folder'
-Ensure-SiteConfiguration -SiteNameToUse $SiteName -PublishPath $publishPath -PoolName $AppPoolName -HttpBindingPort $HttpPort
-
-Write-Step 'Ensuring IIS serves the application over both HTTP and HTTPS'
-Ensure-SiteBindings -SiteNameToUse $SiteName -HttpBindingPort $HttpPort -HttpsBindingPort $HttpsPort -DnsName $effectiveHostName -HttpsCertificateThumbprint $effectiveCertificateThumbprint
-
-Write-Step 'Running EF Core database migrations against SQL Express'
-Push-Location $sourceRoot
+$effectiveCertificateThumbprint = Ensure-HttpsCertificate -RequestedThumbprint $CertificateThumbprint -DnsName $effectiveHostName -AllowCreateSelfSigned:$CreateSelfSignedCertificate
+$siteWasCreated = $false
+$migrationAttempted = $false
 try {
-    $env:ASPNETCORE_ENVIRONMENT = 'Production'
-    $env:ConnectionStrings__DefaultConnection = $ConnectionString
-    $env:Jwt__Key = $JwtKey
-    $env:Jwt__Issuer = $JwtIssuer
-    $env:Jwt__Audience = $JwtAudience
-    $env:PublicApp__BaseUrl = $PublicBaseUrl.TrimEnd('/')
-    & $dotnetEfExe database update --project (Join-Path $sourceRoot 'TheCertMaster.csproj') --startup-project (Join-Path $sourceRoot 'TheCertMaster.csproj')
-    if ($LASTEXITCODE -ne 0) {
-        throw 'dotnet ef database update failed.'
+    Write-Step 'Stopping IIS site and app pool if they already exist'
+    Stop-SiteAndPoolIfPresent -SiteNameToUse $SiteName -PoolName $AppPoolName -PreviousPoolName $deploymentState.ApplicationPool
+
+    Write-Step 'Preserving runtime state'
+    Copy-RuntimeState -ExistingPublishPath $deploymentState.PhysicalPath -ReleasePublishPath $publishPath
+
+    Write-Step 'Creating and configuring the IIS application pool'
+    Ensure-AppPool -AppCmdExe $appCmdExe -PoolName $AppPoolName
+
+    Write-Step 'Preparing runtime permissions'
+    Grant-ApplicationAccess -Path $publishPath -AppPoolName $AppPoolName -Rights ([System.Security.AccessControl.FileSystemRights]::ReadAndExecute)
+    Grant-ApplicationAccess -Path $appDataPath -AppPoolName $AppPoolName -Rights ([System.Security.AccessControl.FileSystemRights]::Modify)
+    Grant-ApplicationAccess -Path $imageUploadPath -AppPoolName $AppPoolName -Rights ([System.Security.AccessControl.FileSystemRights]::Modify)
+
+    Write-Step 'Running the bundled EF Core migration'
+    $migrationAttempted = $true
+    Invoke-MigrationBundle `
+        -MigrationBundlePath $artifact.MigrationBundlePath `
+        -PublishPath $publishPath `
+        -ConnectionStringToUse $ConnectionString `
+        -JwtKeyToUse $JwtKey `
+        -JwtIssuerToUse $JwtIssuer `
+        -JwtAudienceToUse $JwtAudience `
+        -PublicBaseUrlToUse $PublicBaseUrl.TrimEnd('/')
+
+    Write-Step 'Ensuring the bootstrap admin account exists'
+    Invoke-BootstrapAdminTool `
+        -DotNetExe $dotnetExe `
+        -BootstrapperPath $artifact.BootstrapperPath `
+        -ConnectionStringToUse $ConnectionString `
+        -Email $BootstrapAdminEmail `
+        -Password $BootstrapAdminPassword `
+        -FirstName $BootstrapAdminFirstName `
+        -LastName $BootstrapAdminLastName
+
+    Write-Step 'Granting the IIS application pool identity access to the database'
+    Ensure-AppPoolSqlAccess -SqlServerInstance $SqlInstance -TargetDatabaseName $DatabaseName -PoolName $AppPoolName
+
+    Write-Step 'Pointing IIS at the staged release'
+    $siteWasCreated = Ensure-SiteConfiguration -SiteNameToUse $SiteName -PublishPath $publishPath -PoolName $AppPoolName -HttpBindingPort $HttpPort
+
+    Write-Step 'Ensuring IIS serves the application over both HTTP and HTTPS'
+    Ensure-SiteBindings -SiteNameToUse $SiteName -HttpBindingPort $HttpPort -HttpsBindingPort $HttpsPort -DnsName $effectiveHostName -HttpsCertificateThumbprint $effectiveCertificateThumbprint
+
+    Write-Step 'Starting the IIS site and application pool'
+    Start-SiteAndPool -SiteNameToUse $SiteName -PoolName $AppPoolName
+}
+catch {
+    if ($migrationAttempted) {
+        try {
+            Stop-SiteAndPoolIfPresent -SiteNameToUse $SiteName -PoolName $AppPoolName -PreviousPoolName $deploymentState.ApplicationPool
+        }
+        catch {
+            Write-Warning "Could not stop IIS after the migration failure: $($_.Exception.Message)"
+        }
+
+        Write-Warning 'A database migration was attempted. Keep IIS stopped and verify database/application compatibility before restarting it.'
+        Write-Warning 'Review the migration result, then complete this release or restore database/application compatibility manually.'
     }
+    else {
+        Write-Warning 'Installation failed. Restoring the previous IIS site path when possible.'
+        try {
+            Restore-SiteDeploymentState -State $deploymentState -SiteNameToUse $SiteName -SiteWasCreated:$siteWasCreated
+        }
+        catch {
+            Write-Warning "Could not restore the previous IIS configuration: $($_.Exception.Message)"
+        }
+    }
+
+    throw
 }
-finally {
-    Pop-Location
-}
-
-Write-Step 'Ensuring the bootstrap admin account exists'
-Invoke-BootstrapAdminTool `
-    -DotNetExe $dotnetExe `
-    -SourceRoot $sourceRoot `
-    -ConnectionStringToUse $ConnectionString `
-    -Email $BootstrapAdminEmail `
-    -Password $BootstrapAdminPassword `
-    -FirstName $BootstrapAdminFirstName `
-    -LastName $BootstrapAdminLastName
-
-Write-Step 'Granting the IIS application pool identity access to the database'
-Ensure-AppPoolSqlAccess -SqlServerInstance $SqlInstance -TargetDatabaseName $DatabaseName -PoolName $AppPoolName
-
-Write-Step 'Starting the IIS site and application pool'
-Start-SiteAndPool -SiteNameToUse $SiteName -PoolName $AppPoolName
-iisreset | Out-Host
 
 Write-Step 'Installation summary'
-Write-Host "Deployment root: $DeploymentRoot" -ForegroundColor Green
+Write-Host "Deployment root: $($artifact.Root)" -ForegroundColor Green
+Write-Host "Release commit: $($artifact.Commit)" -ForegroundColor Green
 Write-Host "Published site path: $publishPath" -ForegroundColor Green
 Write-Host "IIS site: $SiteName" -ForegroundColor Green
 Write-Host "Application pool: $AppPoolName" -ForegroundColor Green
-Write-Host "SQL connection: $ConnectionString" -ForegroundColor Green
 Write-Host "Public base URL: $($PublicBaseUrl.TrimEnd('/'))" -ForegroundColor Green
 Write-Host "HTTP binding: http://$effectiveHostName`:$HttpPort" -ForegroundColor Green
 Write-Host "HTTPS binding: https://$effectiveHostName`:$HttpsPort" -ForegroundColor Green

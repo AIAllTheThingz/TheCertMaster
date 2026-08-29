@@ -5,7 +5,6 @@
 param(
     [string]$DeploymentRoot = 'C:\Deployment',
     [string]$DotNetChannel = '9.0',
-    [string]$DotNetEfVersion = '9.*',
     [switch]$ForceReinstall
 )
 
@@ -23,31 +22,6 @@ function Ensure-Directory {
 
     if (-not (Test-Path -LiteralPath $Path)) {
         New-Item -ItemType Directory -Path $Path -Force | Out-Null
-    }
-}
-
-function Add-MachinePathEntry {
-    param([string]$PathToAdd)
-
-    if ([string]::IsNullOrWhiteSpace($PathToAdd) -or -not (Test-Path -LiteralPath $PathToAdd)) {
-        return
-    }
-
-    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
-    $parts = @()
-    if (-not [string]::IsNullOrWhiteSpace($machinePath)) {
-        $parts = $machinePath.Split(';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    }
-
-    if ($parts -contains $PathToAdd) {
-        return
-    }
-
-    $updatedPath = (($parts + $PathToAdd) | Select-Object -Unique) -join ';'
-    [Environment]::SetEnvironmentVariable('Path', $updatedPath, 'Machine')
-
-    if (-not ($env:Path.Split(';') -contains $PathToAdd)) {
-        $env:Path = "$env:Path;$PathToAdd"
     }
 }
 
@@ -101,18 +75,6 @@ function Install-ExeSilently {
     if ($process.ExitCode -ne 0) {
         throw "Installer failed: $InstallerPath exited with code $($process.ExitCode)."
     }
-}
-
-function Test-DotNetSdkInstalled {
-    param([string]$Channel)
-
-    $dotnetExe = Join-Path $env:ProgramFiles 'dotnet\dotnet.exe'
-    if (-not (Test-Path -LiteralPath $dotnetExe)) {
-        return $false
-    }
-
-    $sdks = & $dotnetExe --list-sdks 2>$null
-    return [bool]($sdks | Where-Object { $_ -match "^$([regex]::Escape($Channel))\." })
 }
 
 function Test-HostingBundleInstalled {
@@ -174,10 +136,8 @@ function Ensure-WindowsFeatures {
 
 Write-Step 'Preparing folders'
 $installersRoot = Join-Path $DeploymentRoot 'installers'
-$toolRoot = Join-Path $DeploymentRoot 'tools'
 Ensure-Directory -Path $DeploymentRoot
 Ensure-Directory -Path $installersRoot
-Ensure-Directory -Path $toolRoot
 
 Write-Step 'Ensuring IIS and required Windows features are installed'
 Import-Module ServerManager
@@ -186,19 +146,7 @@ Ensure-WindowsFeatures
 Write-Step 'Resolving current .NET 9 installers from official Microsoft release metadata'
 $releaseMetadata = Get-DotNetReleaseMetadata -Channel $DotNetChannel
 $latestRelease = $releaseMetadata.releases | Select-Object -First 1
-$sdkInstaller = Get-InstallerRecord -Files $latestRelease.sdk.files -Name 'dotnet-sdk-win-x64.exe'
 $hostingInstaller = Get-InstallerRecord -Files $latestRelease.'aspnetcore-runtime'.files -Name 'dotnet-hosting-win.exe'
-
-Write-Step 'Ensuring .NET 9 SDK is installed'
-if ($ForceReinstall -or -not (Test-DotNetSdkInstalled -Channel $DotNetChannel)) {
-    $sdkInstallerPath = Join-Path $installersRoot $sdkInstaller.name
-    Download-File -Url $sdkInstaller.url -DestinationPath $sdkInstallerPath -ExpectedSha512 $sdkInstaller.hash
-    Install-ExeSilently -InstallerPath $sdkInstallerPath -Arguments @('/install', '/quiet', '/norestart')
-    Write-Host "Installed .NET SDK $($latestRelease.sdk.version)." -ForegroundColor Green
-}
-else {
-    Write-Host '.NET 9 SDK is already installed.' -ForegroundColor Green
-}
 
 Write-Step 'Ensuring .NET 9 IIS Hosting Bundle is installed'
 if ($ForceReinstall -or -not (Test-HostingBundleInstalled -Channel $DotNetChannel)) {
@@ -216,28 +164,13 @@ if (-not (Test-Path -LiteralPath $dotnetExe)) {
     throw "dotnet.exe was not found after installation."
 }
 
-Write-Step 'Ensuring dotnet-ef is installed into the Deployment tools folder'
-$dotnetEfExe = Join-Path $toolRoot 'dotnet-ef.exe'
-if (Test-Path -LiteralPath $dotnetEfExe) {
-    & $dotnetExe tool update dotnet-ef --tool-path $toolRoot --version $DotNetEfVersion | Out-Host
-}
-else {
-    & $dotnetExe tool install dotnet-ef --tool-path $toolRoot --version $DotNetEfVersion | Out-Host
-}
-
-Write-Step 'Ensuring PATH entries are available for this server'
-Add-MachinePathEntry -PathToAdd (Join-Path $env:ProgramFiles 'dotnet')
-Add-MachinePathEntry -PathToAdd $toolRoot
-
 Write-Step 'Restarting IIS services so the hosting bundle is active'
 iisreset | Out-Host
 
 Write-Step 'Prerequisite summary'
 Write-Host "Deployment root: $DeploymentRoot" -ForegroundColor Green
 Write-Host "dotnet path: $dotnetExe" -ForegroundColor Green
-Write-Host "dotnet-ef path: $dotnetEfExe" -ForegroundColor Green
 Write-Host "Latest .NET release used: $($releaseMetadata.'latest-release')" -ForegroundColor Green
-Write-Host "Latest SDK used: $($releaseMetadata.'latest-sdk')" -ForegroundColor Green
 
 Write-Host ''
 Write-Host 'Prerequisites are ready. Next run the installation script from the Deployment package.' -ForegroundColor Green

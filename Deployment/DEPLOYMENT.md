@@ -50,28 +50,31 @@ This is the preferred starting point for a more realistic beta or early producti
 
 Growth pressure will come more from SQL Server, uploads, quiz history, and operational storage than from the ASP.NET Core application binaries themselves.
 
-## Repository Deployment Bundle
+## Immutable Deployment Artifact
 
-The repository now ships a tracked deployment bundle at [Deployment](Deployment).
+The tagged CI workflow generates one immutable workflow artifact per release commit, named `TheCertMaster-<commit-sha>.zip`. Download the archive and its checksum from the successful CI run for the intended commit. The workflow artifact contains:
 
-Use these bundle assets when preparing a server:
+- `artifact-manifest.json`: SHA-256 hashes for every shipped file and the release commit
+- `publish\`: prebuilt application output
+- `bootstrapper\`: prebuilt Bootstrapper output
+- `migrations\efbundle.exe`: prebuilt EF migration bundle
+- `scripts\`: prerequisite, install, SMTP, and smoke-test scripts
+- `source\`: exact-commit source evidence and `commit-manifest.json`
 
-- [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip): the upload-ready archive for a clean server
-- [Deployment\scripts](Deployment/scripts): packaged copies of the install and verification scripts
-- [Deployment\source](Deployment/source): packaged source tree for on-server publish and EF migration execution
-- [Deployment\sample-imports\Basic_N10-009_Quiz_Import_Package.zip](sample-imports/Basic_N10-009_Quiz_Import_Package.zip): bundled quiz import package for post-install validation
+Verify the archive checksum, `artifact-manifest.json`, and `source\commit-manifest.json` before execution. For a hosted release, verify GitHub artifact provenance with `gh attestation verify` against the trusted repository and expected source digest, for example:
 
-Recommended handling:
+```powershell
+gh attestation verify TheCertMaster-<commit-sha>.zip `
+  --repo AIAllTheThingz/TheCertMaster `
+  --source-digest <commit-sha> `
+  --signer-workflow AIAllTheThingz/TheCertMaster/.github/workflows/ci.yml
+```
 
-1. Copy [Deployment\TheCertMaster-Deployment-Package.zip](Deployment/TheCertMaster-Deployment-Package.zip) to the target server
-2. Extract it so the server ends up with `C:\Deployment\scripts` and `C:\Deployment\source`
-3. Run the packaged scripts from `C:\Deployment\scripts`
+That command verifies the default SLSA provenance predicate. Repeat it with `--predicate-type https://spdx.dev/Document` when verifying the separately attested SPDX SBOM.
 
-After installation, use:
-`C:\Deployment\sample-imports\Basic_N10-009_Quiz_Import_Package.zip`
-to validate quiz upload and import in the admin dashboard.
+The local validation checklist does not claim hosted attestation was run. After verification, extract the archive as a fresh artifact root such as `C:\Deployment`; do not overlay it onto an active release. The server consumes the prebuilt outputs and migration bundle; it does not compile repository source or rebuild the application. Keep `source\` for traceability only.
 
-For deployment servers, prefer this package flow instead of installing Git and cloning the repository directly onto the server.
+For deployment servers, use this artifact flow instead of installing Git and cloning the repository onto the server. Use a reviewed sample package when validating quiz import. If the release source evidence includes `samples/`, that copy is traceability evidence; it is not uploaded into the running application as runtime data.
 
 ## Simple Step-By-Step Install
 
@@ -104,9 +107,9 @@ Official Microsoft page:
 Install page:
 [Download and install SSMS](https://learn.microsoft.com/en-us/ssms/install/install)
 
-Step 10: Copy [TheCertMaster-Deployment-Package.zip](TheCertMaster-Deployment-Package.zip) to the server.
+Step 10: Copy the verified `TheCertMaster-<commit-sha>.zip` artifact from the CI run to the server.
 
-Step 11: Extract it to:
+Step 11: Verify `artifact-manifest.json`, the archive checksum, and `source\commit-manifest.json`, then extract the archive as a fresh artifact root at:
 `C:\Deployment`
 
 Step 12: Open:
@@ -149,7 +152,10 @@ powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\install-produ
 
 Step 20: Optional SMTP setup:
 ```powershell
-powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smtp-test.ps1 -DeploymentRoot C:\Deployment
+$publishedSitePath = (Get-Website -Name 'Default Web Site').physicalPath
+powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smtp-test.ps1 `
+  -DeploymentRoot C:\Deployment `
+  -PublishedSitePath $publishedSitePath
 ```
 
 Step 21: Run the smoke test:
@@ -212,26 +218,7 @@ RateLimiting__AuthenticatedQuizLoadsPerMinute=60
 
 ## Build And Publish
 
-From the project root:
-
-```powershell
-dotnet build
-dotnet publish -c Release -o .\publish
-```
-
-Deploy the contents of the `publish` folder to the target server.
-
-You can automate the release publish plus environment-template generation with:
-
-```powershell
-pwsh .\scripts\prepare-production.ps1
-```
-
-That script:
-
-- generates a `deploy\production.env.example` file
-- creates a random JWT secret placeholder
-- publishes a `Release` build to `deploy\publish`
+Release builds, the Bootstrapper, the migration bundle, the deployment scripts, and exact-commit source evidence are produced by CI. Deploy the resulting `TheCertMaster-<commit-sha>.zip` archive. Local `dotnet build` and `dotnet publish` commands are development checks only and do not replace the immutable release artifact.
 
 ## Bare Server Installation Scripts
 
@@ -244,26 +231,25 @@ Place the deployment package under a root folder named `Deployment`, then run:
 3. [configure-smtp-test.ps1](scripts/configure-smtp-test.ps1) if you want local SMTP testing wired up immediately
 4. Copy and edit [production-settings.template.psd1](scripts/production-settings.template.psd1)
 
-Recommended package layout on the target server:
+Artifact layout on the target server before installation:
 
 ```text
 C:\Deployment\
+  artifact-manifest.json
+  publish\                 prebuilt application output
+  bootstrapper\            prebuilt Bootstrapper output
+  migrations\efbundle.exe  prebuilt migration bundle
   scripts\
-  publish\               optional if you plan to publish on the server
-  source\                optional if the full source is copied here
+  source\                  exact-commit traceability evidence only
+  releases\                created for staged IIS releases
 ```
-
-The installation script can also publish directly from a copied source tree if `TheCertMaster.csproj` is present under the deployment root or under `C:\Deployment\source`.
 
 ### Script 1: Ensure Server Prerequisites
 
 [ensure-server-prerequisites.ps1](scripts/ensure-server-prerequisites.ps1) will:
 
 - install required IIS role services and management tools if missing
-- download the current .NET 9 SDK from official Microsoft release metadata
 - download the current .NET 9 IIS Hosting Bundle from official Microsoft release metadata
-- install `dotnet-ef` into `C:\Deployment\tools`
-- add `C:\Program Files\dotnet` and `C:\Deployment\tools` to the machine `PATH`
 - restart IIS so the hosting bundle is active
 
 Example:
@@ -276,13 +262,18 @@ powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\ensure-server
 
 [install-production-application.ps1](scripts/install-production-application.ps1) will:
 
-- publish the application into `C:\Deployment\publish`
+- validate the root artifact and source manifests before any deployment changes
+- consume the prebuilt application from the verified artifact root
+- use the prebuilt Bootstrapper and migration bundle from the artifact
+- stage the application into a fresh `C:\Deployment\releases\<commit>-<guid>\publish` directory
+- preserve `App_Data` and `wwwroot\uploads\images` from the existing IIS site path
+- use a dedicated application pool; it rejects a current or requested pool that serves another IIS site
 - create/configure the IIS application pool using `No Managed Code`
 - point the IIS site root at the deployed publish folder
 - bind the IIS site on both HTTP and HTTPS
 - write production environment variables into the published `web.config`
 - create required runtime folders and assign app pool permissions
-- run `dotnet ef database update`
+- apply the bundled `migrations\efbundle.exe`
 - grant the IIS app pool identity database access for local SQL Express
 
 If no certificate thumbprint is supplied, the installer can create a self-signed certificate for the host name derived from `PublicBaseUrl`.
@@ -296,7 +287,7 @@ powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\install-produ
   -SettingsFile C:\Deployment\scripts\production-settings.psd1
 ```
 
-The installer reads the PowerShell data file and uses those values as defaults. Any directly passed installer parameters still win if you need to override a value for one run.
+The installer reads the PowerShell data file and uses those values as defaults. Any directly passed installer parameters still win if you need to override a value for one run. Run it from the `scripts` directory in the extracted artifact; it does not compile or publish source. If migration is attempted and fails, the installer stops IIS and leaves it stopped for manual database/application compatibility recovery.
 
 Template file:
 
@@ -359,6 +350,7 @@ Default installation assumptions:
 
 - IIS site name: `Default Web Site`
 - application pool name: `TheCertMaster`
+- the application pool must be dedicated to this site; do not reuse a pool serving another IIS site
 - SQL instance: `.\SQLEXPRESS`
 - database name: `TheCertMaster`
 - deployment root: `C:\Deployment`
@@ -371,7 +363,7 @@ If your production host needs different names or paths, override the script para
 
 - verify the Windows SMTP service is installed
 - start `IISADMIN` and `SMTPSVC` if needed
-- write `C:\Deployment\publish\App_Data\smtp_settings.json` for TheCertMaster
+- write `App_Data\smtp_settings.json` under the explicitly selected published site path for TheCertMaster
 - default the sender address from `PublicBaseUrl` when a settings file is present
 - optionally send a direct SMTP test email
 
@@ -380,8 +372,10 @@ The script is meant for local application SMTP testing after the install complet
 Example:
 
 ```powershell
+$publishedSitePath = (Get-Website -Name 'Default Web Site').physicalPath
 powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smtp-test.ps1 `
   -DeploymentRoot C:\Deployment `
+  -PublishedSitePath $publishedSitePath `
   -TestRecipientEmail you@example.com
 ```
 
@@ -423,6 +417,7 @@ Example for an authenticated relay:
 ```powershell
 powershell.exe -ExecutionPolicy Bypass -File C:\Deployment\scripts\configure-smtp-test.ps1 `
   -DeploymentRoot C:\Deployment `
+  -PublishedSitePath $publishedSitePath `
   -SmtpHost smtp.office365.com `
   -SmtpPort 587 `
   -Username your-real-mailbox@yourdomain.com `
@@ -445,19 +440,18 @@ The application automatically migrates the database only in development.
 
 For production:
 
-1. Publish the app
+1. Verify the immutable release artifact checksum, artifact manifest, source commit manifest, and hosted attestation where available
 2. Set production environment variables
-3. Apply the database migration deliberately before switching traffic to the new app build
+3. Apply the bundled migration executable deliberately before switching traffic to the new app build
 
-Recommended manual migration command:
+The release artifact contains the prebuilt migration bundle. The production installer sets the required production environment values and invokes this executable from the verified artifact:
 
 ```powershell
-dotnet ef database update
+& 'C:\Deployment\migrations\efbundle.exe' --connection "$env:ConnectionStrings__DefaultConnection"
+if ($LASTEXITCODE -ne 0) { throw 'The bundled EF Core migration failed.' }
 ```
 
-Run that against the production connection string in a controlled deployment step.
-
-The production installation script now automates this same migration step by calling `dotnet ef database update` with production settings.
+Run that only after setting the production connection, JWT issuer/audience/key, and public base URL environment values in a controlled deployment step. The production installation script invokes the same bundled executable. The target server does not need the .NET SDK or `dotnet-ef`, and it does not compile repository source.
 
 Migration expectations:
 
@@ -465,6 +459,11 @@ Migration expectations:
 - run migrations as a deliberate release step
 - confirm the target environment is pointing at the intended database before applying migrations
 - if the release contains schema changes, do not mark the deployment complete until the migration succeeds
+- if migration fails after IIS was stopped, leave IIS stopped and complete database/application compatibility recovery manually before starting the site
+
+## Rollback And Recovery
+
+Before replacing a live release, back up the database and copy the current `App_Data` (including Data Protection keys) and `wwwroot\uploads\images` directories. Extract each verified archive into a fresh release root and switch IIS only after manifest, migration, and smoke checks pass. Never overwrite the active publish directory in place. If a migration has run, restoring the prior application binaries alone may not be schema-compatible; use the database recovery plan and the prior verified artifact together. The installer does not automatically roll back a failed migration.
 
 ## ASPNETCORE_ENVIRONMENT
 
@@ -521,14 +520,18 @@ Unhandled API failures return a trace id in the response body. That trace id sho
 - `/health/live` and `/health/ready` are reachable from the deployment target
 - runtime folders for `App_Data` and `wwwroot/uploads/images` are writable
 - the release notes and changelog match the code being deployed
-- the deployment package includes the source tree if the installation server will run `dotnet ef` directly
+- the deployment artifact includes `artifact-manifest.json`, `publish`, `bootstrapper`, `migrations\efbundle.exe`, scripts, and exact-commit source evidence
+- the artifact checksum, artifact manifest, and `source\commit-manifest.json` match the intended release commit
+- hosted provenance and SBOM attestations are verified with the trusted repository and source digest when the artifact came from GitHub
 
 ## Release Checklist
 
 - run a release build
+- build and test the Bootstrapper
 - run the integration tests
-- publish to a clean output folder
-- apply production migration in a controlled step
+- restore in locked mode and review dependency vulnerability output
+- generate and inspect the immutable deployment archive and SBOM/provenance outputs
+- apply the bundled migration in a controlled step
 - smoke test `/`, `/swapi.html`, and `/health`
 - smoke test `/health/live`, `/health/ready`, and `/version`
 - verify admin login and a sample quiz import

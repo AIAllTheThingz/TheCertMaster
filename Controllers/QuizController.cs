@@ -34,7 +34,7 @@ namespace TheCertMaster.Controllers
             if (!string.IsNullOrWhiteSpace(category) &&
                 !string.Equals(category, "All", StringComparison.OrdinalIgnoreCase))
             {
-                var normalizedCategory = NormalizeCategory(category);
+                var normalizedCategory = CategoryNormalizer.Normalize(category);
 
                 query = query.Where(q =>
                     (q.Category ?? "Uncategorized") == normalizedCategory);
@@ -100,11 +100,6 @@ namespace TheCertMaster.Controllers
             if (quiz is null)
                 return NotFound();
 
-            // Index incoming answers by QuestionId for quick lookup
-            var incoming = (attempt.Answers ?? new List<QuestionAttemptDto>())
-                .GroupBy(a => a.QuestionId)
-                .ToDictionary(g => g.Key, g => g.First());
-
             var deliveredQuestionIds = (attempt.DeliveredQuestionIds ?? new List<Guid>())
                 .Distinct()
                 .ToHashSet();
@@ -116,61 +111,7 @@ namespace TheCertMaster.Controllers
             if (IsGuestUser() && gradedQuestions.Count > GuestQuestionLimit)
                 return BadRequest($"Guest users can submit up to {GuestQuestionLimit} questions per quiz.");
 
-            var result = new QuizAttemptResultDto
-            {
-                QuizId = quizId,
-                TotalQuestions = gradedQuestions.Count
-            };
-
-            var correct = 0;
-
-            foreach (var q in gradedQuestions)
-            {
-                incoming.TryGetValue(q.Id, out var a);
-                var selected = (a?.SelectedAnswerIds ?? new List<Guid>())
-                    .Distinct()
-                    .ToList();
-
-                // Determine the correct set from DB
-                var correctIds = q.Answers
-                    .Where(x => x.IsCorrect)
-                    .Select(x => x.Id)
-                    .OrderBy(x => x)
-                    .ToList();
-
-                var selectedIds = selected
-                    .OrderBy(x => x)
-                    .ToList();
-
-                bool isCorrect;
-
-                if (!q.AllowMultiple)
-                {
-                    // single-answer question: exactly one selected, and it must be correct
-                    isCorrect = selectedIds.Count == 1 && correctIds.Count == 1 && selectedIds[0] == correctIds[0];
-                }
-                else
-                {
-                    // multi-answer question: exact set match (order independent)
-                    isCorrect = selectedIds.SequenceEqual(correctIds);
-                }
-
-                if (isCorrect)
-                    correct++;
-
-                result.Questions.Add(new QuestionResultDto
-                {
-                    QuestionId = q.Id,
-                    IsCorrect = isCorrect,
-                    SelectedAnswerIds = selectedIds
-                });
-            }
-
-            result.CorrectCount = correct;
-            result.ScorePercent = result.TotalQuestions == 0
-                ? 0
-                : Math.Round((double)result.CorrectCount / result.TotalQuestions * 100.0, 2);
-            result.Passed = result.ScorePercent >= PassingScorePercent;
+            var result = GradeQuestions(gradedQuestions, attempt, quizId);
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrWhiteSpace(userId))
@@ -228,51 +169,7 @@ namespace TheCertMaster.Controllers
                     return BadRequest($"Guest users can submit up to {guestCustomQuestionLimit} questions for this category selection.");
             }
 
-            var incoming = (attempt.Answers ?? new List<QuestionAttemptDto>())
-                .GroupBy(a => a.QuestionId)
-                .ToDictionary(g => g.Key, g => g.First());
-
-            var result = new QuizAttemptResultDto
-            {
-                QuizId = Guid.Empty,
-                TotalQuestions = questions.Count
-            };
-
-            var correct = 0;
-            foreach (var q in questions)
-            {
-                incoming.TryGetValue(q.Id, out var a);
-                var selected = (a?.SelectedAnswerIds ?? new List<Guid>())
-                    .Distinct()
-                    .OrderBy(x => x)
-                    .ToList();
-
-                var correctIds = q.Answers
-                    .Where(x => x.IsCorrect)
-                    .Select(x => x.Id)
-                    .OrderBy(x => x)
-                    .ToList();
-
-                var isCorrect = !q.AllowMultiple
-                    ? selected.Count == 1 && correctIds.Count == 1 && selected[0] == correctIds[0]
-                    : selected.SequenceEqual(correctIds);
-
-                if (isCorrect)
-                    correct++;
-
-                result.Questions.Add(new QuestionResultDto
-                {
-                    QuestionId = q.Id,
-                    IsCorrect = isCorrect,
-                    SelectedAnswerIds = selected
-                });
-            }
-
-            result.CorrectCount = correct;
-            result.ScorePercent = result.TotalQuestions == 0
-                ? 0
-                : Math.Round((double)result.CorrectCount / result.TotalQuestions * 100.0, 2);
-            result.Passed = result.ScorePercent >= PassingScorePercent;
+            var result = GradeQuestions(questions, attempt, Guid.Empty);
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrWhiteSpace(userId))
@@ -318,6 +215,54 @@ namespace TheCertMaster.Controllers
             return User?.Identity?.IsAuthenticated != true;
         }
 
+        private static QuizAttemptResultDto GradeQuestions(
+            IReadOnlyCollection<Question> questions,
+            QuizAttemptSubmitDto attempt,
+            Guid quizId)
+        {
+            var incoming = (attempt.Answers ?? new List<QuestionAttemptDto>())
+                .GroupBy(a => a.QuestionId)
+                .ToDictionary(g => g.Key, g => g.First());
+            var result = new QuizAttemptResultDto
+            {
+                QuizId = quizId,
+                TotalQuestions = questions.Count
+            };
+
+            foreach (var question in questions)
+            {
+                incoming.TryGetValue(question.Id, out var answer);
+                var selectedIds = (answer?.SelectedAnswerIds ?? new List<Guid>())
+                    .Distinct()
+                    .OrderBy(id => id)
+                    .ToList();
+                var correctIds = question.Answers
+                    .Where(answer => answer.IsCorrect)
+                    .Select(answer => answer.Id)
+                    .OrderBy(id => id)
+                    .ToList();
+                var isCorrect = !question.AllowMultiple
+                    ? selectedIds.Count == 1 && correctIds.Count == 1 && selectedIds[0] == correctIds[0]
+                    : selectedIds.SequenceEqual(correctIds);
+
+                if (isCorrect)
+                    result.CorrectCount++;
+
+                result.Questions.Add(new QuestionResultDto
+                {
+                    QuestionId = question.Id,
+                    IsCorrect = isCorrect,
+                    SelectedAnswerIds = selectedIds
+                });
+            }
+
+            result.ScorePercent = result.TotalQuestions == 0
+                ? 0
+                : Math.Round((double)result.CorrectCount / result.TotalQuestions * 100.0, 2);
+            result.Passed = result.ScorePercent >= PassingScorePercent;
+            return result;
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpDelete("{quizId:guid}")]
         public async Task<IActionResult> Delete(Guid quizId)
@@ -335,14 +280,5 @@ namespace TheCertMaster.Controllers
             return Ok($"Deleted quiz {quizId}");
         }
 
-        private static string NormalizeCategory(string? category)
-        {
-            if (string.IsNullOrWhiteSpace(category))
-                return "Uncategorized";
-
-            var collapsed = System.Text.RegularExpressions.Regex.Replace(category.Trim(), @"\s+", " ");
-            var lower = collapsed.ToLowerInvariant();
-            return System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(lower);
-        }
     }
 }
