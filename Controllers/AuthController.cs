@@ -22,6 +22,7 @@ namespace TheCertMaster.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+        private readonly PasswordResetLinkService _passwordResetLinkService;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
@@ -29,12 +30,14 @@ namespace TheCertMaster.Controllers
             SignInManager<ApplicationUser> signInManager,
             IConfiguration config,
             IEmailService emailService,
+            PasswordResetLinkService passwordResetLinkService,
             ILogger<AuthController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _config = config;
             _emailService = emailService;
+            _passwordResetLinkService = passwordResetLinkService;
             _logger = logger;
         }
 
@@ -63,6 +66,12 @@ namespace TheCertMaster.Controllers
         }
 
         public sealed class ResendVerificationRequest
+        {
+            [EmailAddress]
+            public string Email { get; set; } = string.Empty;
+        }
+
+        public sealed class ForgotPasswordRequest
         {
             [EmailAddress]
             public string Email { get; set; } = string.Empty;
@@ -221,6 +230,39 @@ namespace TheCertMaster.Controllers
             return Ok(new
             {
                 message = "If an unverified account exists for that email address, a verification email has been sent."
+            });
+        }
+
+        [AllowAnonymous]
+        [EnableRateLimiting("AuthSensitive")]
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest? request)
+        {
+            var email = request?.Email?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(email))
+                return BadRequest("Email is required.");
+
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user != null)
+            {
+                try
+                {
+                    await _passwordResetLinkService.SendResetLinkAsync(user, Request.Scheme, Request.Host.ToString());
+                    _logger.LogInformation("Password reset link sent for {Email} during forgot-password request", email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Password reset link could not be sent for {Email} during forgot-password request", email);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Password reset requested for non-existent email {Email}", email);
+            }
+
+            return Ok(new
+            {
+                message = "If an account exists for that email address, a password reset link has been sent."
             });
         }
 

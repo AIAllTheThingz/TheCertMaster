@@ -685,6 +685,36 @@ public class FlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ForgotPassword_ReturnsIdenticalResponse_ForExistingAndNonExistentEmail_AndOnlySendsRealEmailToExistingAccount()
+    {
+        _factory.EmailService.Clear();
+        var client = _factory.CreateClient();
+
+        using var existingContent = new StringContent(
+            JsonSerializer.Serialize(new { email = "admin@thecertmaster.local" }),
+            Encoding.UTF8,
+            "application/json");
+        using var existingResponse = await client.PostAsync("/api/auth/forgot-password", existingContent);
+        existingResponse.EnsureSuccessStatusCode();
+        var existingBody = await existingResponse.Content.ReadAsStringAsync();
+
+        using var missingContent = new StringContent(
+            JsonSerializer.Serialize(new { email = "no-such-user@example.com" }),
+            Encoding.UTF8,
+            "application/json");
+        using var missingResponse = await client.PostAsync("/api/auth/forgot-password", missingContent);
+        missingResponse.EnsureSuccessStatusCode();
+        var missingBody = await missingResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(existingResponse.StatusCode, missingResponse.StatusCode);
+        Assert.Equal(existingBody, missingBody);
+
+        var sentMessage = Assert.Single(_factory.EmailService.Messages);
+        Assert.Equal("admin@thecertmaster.local", sentMessage.ToEmail);
+        Assert.Contains("/reset-password.html?", sentMessage.BodyText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task AdminUserManagement_RejectsSpecialCharactersInProfileNames()
     {
         var client = _factory.CreateClient();

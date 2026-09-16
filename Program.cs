@@ -329,6 +329,7 @@ builder.Services.AddScoped<QuizQueryService>();
 builder.Services.AddScoped<QuizImportService>();
 builder.Services.AddScoped<SampleDataSeeder>();
 builder.Services.AddScoped<DatabaseHealthCheck>();
+builder.Services.AddScoped<PasswordResetLinkService>();
 
 // SMTP settings + email service (supports authenticated and unauthenticated relay)
 builder.Services.AddScoped<ISmtpSettingsStore, FileSmtpSettingsStore>();

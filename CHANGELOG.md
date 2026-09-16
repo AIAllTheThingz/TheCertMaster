@@ -8,6 +8,7 @@ The format is based on Keep a Changelog, and this project follows semantic-style
 
 ### Added
 
+- Self-service "forgot password" flow: `POST /api/auth/forgot-password` lets a public user request a password reset link without admin involvement
 - Public user account management page
 - Persisted signed-in quiz history with pass/fail tracking
 - Public email verification flow support in the documented user path

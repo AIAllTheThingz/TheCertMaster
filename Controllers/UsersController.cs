@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using TheCertMaster.Models;
 using TheCertMaster.Services;
-using System.Text;
 using TheCertMaster.Validation;
 
 namespace TheCertMaster.Controllers
@@ -18,6 +16,7 @@ namespace TheCertMaster.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+        private readonly PasswordResetLinkService _passwordResetLinkService;
         private readonly ILogger<UsersController> _logger;
 
         public UsersController(
@@ -25,12 +24,14 @@ namespace TheCertMaster.Controllers
             RoleManager<IdentityRole> roleManager,
             IConfiguration config,
             IEmailService emailService,
+            PasswordResetLinkService passwordResetLinkService,
             ILogger<UsersController> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _config = config;
             _emailService = emailService;
+            _passwordResetLinkService = passwordResetLinkService;
             _logger = logger;
         }
 
@@ -91,23 +92,7 @@ namespace TheCertMaster.Controllers
             if (user == null)
                 return NotFound("User not found.");
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-
-            var configuredBaseUrl = _config["PublicApp:BaseUrl"]?.Trim().TrimEnd('/');
-            var baseUrl = !string.IsNullOrWhiteSpace(configuredBaseUrl)
-                ? configuredBaseUrl
-                : $"{Request.Scheme}://{Request.Host}";
-
-            var resetUrl =
-                $"{baseUrl}/reset-password.html?email={Uri.EscapeDataString(user.Email ?? string.Empty)}&code={Uri.EscapeDataString(encodedToken)}";
-
-            var body =
-                $"A password reset has been requested for your The Cert Master account.{Environment.NewLine}{Environment.NewLine}" +
-                $"Open this link to set a new password:{Environment.NewLine}{resetUrl}{Environment.NewLine}{Environment.NewLine}" +
-                $"If you did not expect this email, you can ignore it.";
-
-            await _emailService.SendAsync(user.Email ?? string.Empty, "Reset your The Cert Master password", body);
+            await _passwordResetLinkService.SendResetLinkAsync(user, Request.Scheme, Request.Host.ToString());
             _logger.LogInformation("Admin sent password reset link to {Email}", email);
 
             return Ok($"Password reset link sent to {email}.");
