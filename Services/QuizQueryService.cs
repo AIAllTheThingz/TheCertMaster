@@ -12,14 +12,14 @@ namespace TheCertMaster.Services
 
         public QuizQueryService(QuizDbContext db) => _db = db;
 
-        public async Task<RandomizedQuizDto?> GetRandomizedAsync(Guid quizId, int? questionCount = null)
+        public async Task<RandomizedQuizDto?> GetRandomizedAsync(Guid quizId, int? questionCount = null, CancellationToken cancellationToken = default)
         {
             var quiz = await _db.Quizzes
                 .Include(q => q.Questions)
                     .ThenInclude(qn => qn.Answers)
                 .Include(q => q.Questions)
                     .ThenInclude(qn => qn.Images)
-                .FirstOrDefaultAsync(q => q.Id == quizId);
+                .FirstOrDefaultAsync(q => q.Id == quizId, cancellationToken);
 
             if (quiz is null) return null;
 
@@ -60,7 +60,7 @@ namespace TheCertMaster.Services
             };
         }
 
-        public async Task<CustomQuizAvailabilityDto> GetAvailabilityForCategoriesAsync(IEnumerable<string> categories)
+        public async Task<CustomQuizAvailabilityDto> GetAvailabilityForCategoriesAsync(IEnumerable<string> categories, CancellationToken cancellationToken = default)
         {
             var normalizedCategories = NormalizeCategories(categories);
             var categoryKeys = normalizedCategories.Select(c => c.ToLowerInvariant()).ToList();
@@ -69,7 +69,7 @@ namespace TheCertMaster.Services
                 .AsNoTracking()
                 .Include(q => q.Quiz)
                 .Where(q => categoryKeys.Contains((q.Quiz!.Category ?? "Uncategorized").ToLower()))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var counts = questions
                 .GroupBy(q => CategoryNormalizer.Normalize(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase)
@@ -82,7 +82,7 @@ namespace TheCertMaster.Services
             };
         }
 
-        public async Task<RandomizedQuizDto?> GetRandomizedByCategoriesAsync(IEnumerable<string> categories, int? questionCount = null)
+        public async Task<RandomizedQuizDto?> GetRandomizedByCategoriesAsync(IEnumerable<string> categories, int? questionCount = null, CancellationToken cancellationToken = default)
         {
             var normalizedCategories = NormalizeCategories(categories);
             if (normalizedCategories.Count == 0)
@@ -96,7 +96,7 @@ namespace TheCertMaster.Services
                 .Include(q => q.Images)
                 .Include(q => q.Quiz)
                 .Where(q => categoryKeys.Contains((q.Quiz!.Category ?? "Uncategorized").ToLower()))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             if (questions.Count == 0)
             {

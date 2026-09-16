@@ -21,9 +21,9 @@ namespace TheCertMaster.Controllers
         [HttpPost("upload")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Upload([FromForm] FileUploadModel model)
+        public async Task<IActionResult> Upload([FromForm] FileUploadModel model, CancellationToken cancellationToken)
         {
-            var msg = await _import.SaveUploadAsync(model.File);
+            var msg = await _import.SaveUploadAsync(model.File, cancellationToken);
             _logger.LogInformation("Admin uploaded file {FileName}", model.File?.FileName);
             return Ok(msg);
         }
@@ -32,11 +32,11 @@ namespace TheCertMaster.Controllers
         [HttpPost("upload-package")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> UploadPackage([FromForm] FileUploadModel model)
+        public async Task<IActionResult> UploadPackage([FromForm] FileUploadModel model, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _import.SaveUploadPackageAsync(model.File);
+                var result = await _import.SaveUploadPackageAsync(model.File, cancellationToken);
                 _logger.LogInformation("Admin uploaded and imported package {FileName}", model.File?.FileName);
                 return Ok(result);
             }
@@ -49,11 +49,11 @@ namespace TheCertMaster.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost("process/{fileName}")]
-        public async Task<IActionResult> Process(string fileName)
+        public async Task<IActionResult> Process(string fileName, CancellationToken cancellationToken)
         {
             try
             {
-                var result = await _import.ProcessCsvAsync(fileName);
+                var result = await _import.ProcessCsvAsync(fileName, cancellationToken);
                 _logger.LogInformation("Admin processed import file {FileName}", fileName);
                 return Ok(result);
             }

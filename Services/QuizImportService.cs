@@ -115,7 +115,7 @@ namespace TheCertMaster.Services
                 .ToList();
         }
 
-        public async Task<string> SaveUploadAsync(IFormFile file)
+        public async Task<string> SaveUploadAsync(IFormFile file, CancellationToken cancellationToken = default)
         {
             if (file == null || file.Length == 0)
                 throw new InvalidOperationException("No file received.");
@@ -127,12 +127,12 @@ namespace TheCertMaster.Services
             var outPath = Path.Combine(uploadsRoot, $"{Guid.NewGuid()}_{safeName}");
 
             using (var fs = new FileStream(outPath, FileMode.Create, FileAccess.Write))
-                await file.CopyToAsync(fs);
+                await file.CopyToAsync(fs, cancellationToken);
 
             return $"Saved import file: {Path.GetFileName(outPath)}";
         }
 
-        public async Task<PackageUploadResult> SaveUploadPackageAsync(IFormFile file)
+        public async Task<PackageUploadResult> SaveUploadPackageAsync(IFormFile file, CancellationToken cancellationToken = default)
         {
             if (file == null || file.Length == 0)
                 throw new InvalidOperationException("No file received.");
@@ -148,7 +148,7 @@ namespace TheCertMaster.Services
 
             var zipPath = Path.Combine(privateUploadsRoot, $"{packageId}_{safeName}");
             using (var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write))
-                await file.CopyToAsync(fs);
+                await file.CopyToAsync(fs, cancellationToken);
 
             var publicUploadsRoot = GetPublicUploadsRoot();
             var imagesDir = Path.Combine(publicUploadsRoot, "images", packageId);
@@ -172,7 +172,7 @@ namespace TheCertMaster.Services
 
                 using (var inStream = csvEntry.Open())
                 using (var outStream = new FileStream(csvOutPath, FileMode.Create, FileAccess.Write))
-                    await inStream.CopyToAsync(outStream);
+                    await inStream.CopyToAsync(outStream, cancellationToken);
 
                 foreach (var entry in validation.ImageEntries)
                 {
@@ -182,7 +182,7 @@ namespace TheCertMaster.Services
 
                     using (var inStream = entry.Open())
                     using (var outStream = new FileStream(outPath, FileMode.Create, FileAccess.Write))
-                        await inStream.CopyToAsync(outStream);
+                        await inStream.CopyToAsync(outStream, cancellationToken);
 
                     imagesSaved++;
                 }
@@ -191,7 +191,7 @@ namespace TheCertMaster.Services
             if (string.IsNullOrWhiteSpace(csvSavedFileName))
                 throw new InvalidOperationException("Package processing failed because the CSV file could not be prepared.");
 
-            var importResult = await ProcessCsvInternalAsync(csvSavedFileName);
+            var importResult = await ProcessCsvInternalAsync(csvSavedFileName, cancellationToken);
 
             return new PackageUploadResult
             {
@@ -317,13 +317,13 @@ namespace TheCertMaster.Services
                 || v.Equals("y", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async Task<string> ProcessCsvAsync(string fileName)
+        public async Task<string> ProcessCsvAsync(string fileName, CancellationToken cancellationToken = default)
         {
-            var result = await ProcessCsvInternalAsync(fileName);
+            var result = await ProcessCsvInternalAsync(fileName, cancellationToken);
             return result.Message;
         }
 
-        private async Task<ProcessCsvResult> ProcessCsvInternalAsync(string fileName)
+        private async Task<ProcessCsvResult> ProcessCsvInternalAsync(string fileName, CancellationToken cancellationToken = default)
         {
             var run = new ImportRunRecord
             {
@@ -425,7 +425,7 @@ namespace TheCertMaster.Services
 
                 int quizCount = 0, questionCount = 0, answerCount = 0;
 
-                await using (var transaction = await _db.Database.BeginTransactionAsync())
+                await using (var transaction = await _db.Database.BeginTransactionAsync(cancellationToken))
                 {
                     foreach (var quizGroup in grouped)
                     {
@@ -445,7 +445,7 @@ namespace TheCertMaster.Services
                         if (existing != null)
                         {
                             _db.Quizzes.Remove(existing);
-                            await _db.SaveChangesAsync();
+                            await _db.SaveChangesAsync(cancellationToken);
                         }
 
                         var quiz = new Models.Quiz { Title = quizTitle, Category = quizCategory == "Uncategorized" ? null : quizCategory };
@@ -504,8 +504,8 @@ namespace TheCertMaster.Services
                         }
                     }
 
-                    await _db.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                    await _db.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
                 }
 
                 run.Rows = rows.Count;

@@ -17,13 +17,13 @@ namespace TheCertMaster.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> List()
+        public async Task<IActionResult> List(CancellationToken cancellationToken)
         {
             var raw = await _db.Quizzes
                 .AsNoTracking()
                 .OrderBy(q => q.CreatedUtc)
                 .Select(q => q.Category)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             // Distinct keeps the first-encountered casing for each case-insensitive
             // group, so the earliest-imported quiz's casing wins for display.

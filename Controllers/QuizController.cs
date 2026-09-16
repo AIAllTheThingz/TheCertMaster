@@ -28,7 +28,7 @@ namespace TheCertMaster.Controllers
 
         // Lightweight quiz listing for browser pickers / admin UIs
         [HttpGet]
-        public async Task<IActionResult> List([FromQuery] string? category)
+        public async Task<IActionResult> List([FromQuery] string? category, CancellationToken cancellationToken)
         {
             var query = _db.Quizzes.AsNoTracking();
 
@@ -50,7 +50,7 @@ namespace TheCertMaster.Controllers
                     Category = string.IsNullOrWhiteSpace(q.Category) ? "Uncategorized" : q.Category,
                     q.CreatedUtc
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return Ok(quizzes);
         }
@@ -58,37 +58,37 @@ namespace TheCertMaster.Controllers
         // Returns randomized questions & answers on each call
         [EnableRateLimiting("QuizLoad")]
         [HttpGet("{quizId:guid}/random")]
-        public async Task<IActionResult> GetRandomized(Guid quizId, [FromQuery] int? questionCount)
+        public async Task<IActionResult> GetRandomized(Guid quizId, [FromQuery] int? questionCount, CancellationToken cancellationToken)
         {
-            var dto = await _query.GetRandomizedAsync(quizId, NormalizeRequestedQuestionCount(questionCount));
+            var dto = await _query.GetRandomizedAsync(quizId, NormalizeRequestedQuestionCount(questionCount), cancellationToken);
             return dto is null ? NotFound() : Ok(dto);
         }
 
         [HttpGet("custom/availability")]
-        public async Task<IActionResult> GetCustomAvailability([FromQuery] List<string> categories)
+        public async Task<IActionResult> GetCustomAvailability([FromQuery] List<string> categories, CancellationToken cancellationToken)
         {
             if (categories == null || categories.Count == 0)
                 return BadRequest("At least one category is required.");
 
-            var dto = await _query.GetAvailabilityForCategoriesAsync(categories);
+            var dto = await _query.GetAvailabilityForCategoriesAsync(categories, cancellationToken);
             return Ok(dto);
         }
 
         [EnableRateLimiting("QuizLoad")]
         [HttpGet("custom/random")]
-        public async Task<IActionResult> GetRandomizedCustom([FromQuery] List<string> categories, [FromQuery] int? questionCount)
+        public async Task<IActionResult> GetRandomizedCustom([FromQuery] List<string> categories, [FromQuery] int? questionCount, CancellationToken cancellationToken)
         {
             if (categories == null || categories.Count == 0)
                 return BadRequest("At least one category is required.");
 
-            var dto = await _query.GetRandomizedByCategoriesAsync(categories, NormalizeRequestedQuestionCount(questionCount));
+            var dto = await _query.GetRandomizedByCategoriesAsync(categories, NormalizeRequestedQuestionCount(questionCount), cancellationToken);
             return dto is null ? NotFound() : Ok(dto);
         }
 
         // Submits an attempt and returns a score. Correct answers never leave the server.
         [EnableRateLimiting("QuizLoad")]
         [HttpPost("{quizId:guid}/submit")]
-        public async Task<IActionResult> Submit(Guid quizId, [FromBody] QuizAttemptSubmitDto attempt)
+        public async Task<IActionResult> Submit(Guid quizId, [FromBody] QuizAttemptSubmitDto attempt, CancellationToken cancellationToken)
         {
             if (attempt is null)
                 return BadRequest("Missing request body.");
@@ -100,7 +100,7 @@ namespace TheCertMaster.Controllers
                 .Include(q => q.Questions)
                     .ThenInclude(qn => qn.Answers)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(q => q.Id == quizId);
+                .FirstOrDefaultAsync(q => q.Id == quizId, cancellationToken);
 
             if (quiz is null)
                 return NotFound();
@@ -134,7 +134,7 @@ namespace TheCertMaster.Controllers
                     SubmittedUtc = DateTime.UtcNow
                 });
 
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(cancellationToken);
             }
 
             return Ok(result);
@@ -142,7 +142,7 @@ namespace TheCertMaster.Controllers
 
         [EnableRateLimiting("QuizLoad")]
         [HttpPost("custom/submit")]
-        public async Task<IActionResult> SubmitCustom([FromBody] QuizAttemptSubmitDto attempt)
+        public async Task<IActionResult> SubmitCustom([FromBody] QuizAttemptSubmitDto attempt, CancellationToken cancellationToken)
         {
             if (attempt is null)
                 return BadRequest("Missing request body.");
@@ -162,7 +162,7 @@ namespace TheCertMaster.Controllers
                 .Include(q => q.Quiz)
                 .AsNoTracking()
                 .Where(q => deliveredQuestionIds.Contains(q.Id))
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             if (questions.Count == 0)
                 return NotFound();
@@ -206,7 +206,7 @@ namespace TheCertMaster.Controllers
                     SubmittedUtc = DateTime.UtcNow
                 });
 
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(cancellationToken);
             }
 
             return Ok(result);
@@ -281,17 +281,17 @@ namespace TheCertMaster.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{quizId:guid}")]
-        public async Task<IActionResult> Delete(Guid quizId)
+        public async Task<IActionResult> Delete(Guid quizId, CancellationToken cancellationToken)
         {
             var quiz = await _db.Quizzes
              .Include(q => q.Questions)
-                .FirstOrDefaultAsync(q => q.Id == quizId);
+                .FirstOrDefaultAsync(q => q.Id == quizId, cancellationToken);
 
             if (quiz == null)
              return NotFound($"Quiz not found: {quizId}");
 
             _db.Quizzes.Remove(quiz);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
 
             return Ok($"Deleted quiz {quizId}");
         }
