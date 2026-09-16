@@ -33,6 +33,7 @@ The format is based on Keep a Changelog, and this project follows semantic-style
 ### Fixed
 
 - Bulk quiz CSV import now runs each import as a single database transaction, so a failure partway through an import (e.g. a later quiz's data failing to save) rolls back any quizzes already removed for replacement instead of leaving them permanently deleted
+- Public registration no longer reveals whether an email address already has a confirmed account; a repeat registration attempt now gets the same generic success response as a first-time registration, and no duplicate email is sent
 
 ## [v0.1.0-alpha] - 2026-03-17
 

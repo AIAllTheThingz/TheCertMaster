@@ -175,7 +175,10 @@ namespace TheCertMaster.Controllers
                 }
 
                 _logger.LogWarning("Public registration attempted with existing verified email {Email}", email);
-                return BadRequest("An account with that email address already exists.");
+                return Ok(new
+                {
+                    message = "Registration successful. Please check your email and confirm your address before signing in."
+                });
             }
 
             var user = new ApplicationUser

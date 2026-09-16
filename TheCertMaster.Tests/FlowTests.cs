@@ -441,6 +441,47 @@ public class FlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task PublicRegistration_ForExistingConfirmedEmail_ReturnsGenericSuccessResponse_AndSendsNoEmail()
+    {
+        _factory.EmailService.Clear();
+        var client = _factory.CreateClient();
+
+        var registerPayload = JsonSerializer.Serialize(new
+        {
+            firstName = "Already",
+            lastName = "Registered",
+            email = "alreadyregistered@example.com",
+            password = "Password!123",
+            confirmPassword = "Password!123"
+        });
+
+        using var registerResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(registerPayload, Encoding.UTF8, "application/json"));
+        registerResponse.EnsureSuccessStatusCode();
+        var successBody = await registerResponse.Content.ReadAsStringAsync();
+
+        var verificationLink = _factory.EmailService.Messages[0].BodyText
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .First(line => line.StartsWith("http", StringComparison.OrdinalIgnoreCase));
+        var verificationPath = new Uri(verificationLink).PathAndQuery;
+        using var verificationResponse = await client.GetAsync(
+            verificationPath.Replace("/verify-email.html", "/api/auth/confirm-email", StringComparison.OrdinalIgnoreCase));
+        verificationResponse.EnsureSuccessStatusCode();
+
+        _factory.EmailService.Clear();
+
+        using var repeatResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(registerPayload, Encoding.UTF8, "application/json"));
+
+        Assert.True(repeatResponse.IsSuccessStatusCode);
+        var repeatBody = await repeatResponse.Content.ReadAsStringAsync();
+        Assert.Equal(successBody, repeatBody);
+        Assert.Empty(_factory.EmailService.Messages);
+    }
+
+    [Fact]
     public async Task PublicRegistration_WhenVerificationEmailFails_ReturnsFriendlySuccessMessage()
     {
         _factory.EmailService.Clear();
