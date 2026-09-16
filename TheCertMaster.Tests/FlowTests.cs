@@ -361,6 +361,56 @@ public class FlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task UploadPackage_WithSvgOnlyImage_IsTreatedAsMissingRatherThanImported()
+    {
+        var client = _factory.CreateClient();
+        var token = await _factory.LoginAsAdminAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        byte[] packageBytes;
+        using (var ms = new MemoryStream())
+        {
+            using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                var csvEntry = archive.CreateEntry("svg-only.csv");
+                await using (var writer = new StreamWriter(csvEntry.Open(), Encoding.UTF8))
+                {
+                    await writer.WriteAsync(string.Join(Environment.NewLine, new[]
+                    {
+                        "QuizTitle,Category,QuestionText,AnswerText,IsCorrect,QuestionImgKey",
+                        "Svg Package Quiz,Networking,What port does HTTPS use?,443,true,diagram-01",
+                        "Svg Package Quiz,Networking,What port does HTTPS use?,80,false,diagram-01"
+                    }));
+                }
+
+                // SVG is not a supported question-image extension, so this entry should
+                // never be extracted, leaving "diagram-01" unresolved.
+                var imageEntry = archive.CreateEntry("images/diagram-01.svg");
+                await using (var imageStream = imageEntry.Open())
+                await using (var writer = new StreamWriter(imageStream, Encoding.UTF8))
+                {
+                    await writer.WriteAsync("<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>");
+                }
+            }
+
+            packageBytes = ms.ToArray();
+        }
+
+        using var multipart = new MultipartFormDataContent();
+        multipart.Add(new ByteArrayContent(packageBytes), "File", "svg-only-package.zip");
+
+        using var uploadResponse = await client.PostAsync("/api/import/upload-package", multipart);
+        Assert.Equal(HttpStatusCode.BadRequest, uploadResponse.StatusCode);
+
+        var body = await uploadResponse.Content.ReadAsStringAsync();
+        Assert.Contains("Missing image files for key(s): diagram-01", body);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<QuizDbContext>();
+        Assert.False(db.Quizzes.Any(q => q.Title == "Svg Package Quiz"));
+    }
+
+    [Fact]
     public async Task ProcessCsv_WhenLaterQuizFailsToSave_RollsBackPreviouslyReplacedQuiz()
     {
         var client = _factory.CreateClient();

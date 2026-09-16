@@ -211,12 +211,14 @@ namespace TheCertMaster.Services
 
         private static bool IsSupportedImageExtension(string ext)
         {
+            // SVG is intentionally excluded: an SVG can carry a <script> that executes
+            // when its URL is opened directly (not through an <img> tag), and this
+            // codebase has no SVG sanitizer to strip that safely on import.
             return ext.Equals(".png", StringComparison.OrdinalIgnoreCase)
                 || ext.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
                 || ext.Equals(".jpeg", StringComparison.OrdinalIgnoreCase)
                 || ext.Equals(".gif", StringComparison.OrdinalIgnoreCase)
-                || ext.Equals(".webp", StringComparison.OrdinalIgnoreCase)
-                || ext.Equals(".svg", StringComparison.OrdinalIgnoreCase);
+                || ext.Equals(".webp", StringComparison.OrdinalIgnoreCase);
         }
 
         private static IEnumerable<string[]> ReadCsvRecords(string filePath)
@@ -654,7 +656,6 @@ namespace TheCertMaster.Services
                 ".jpeg" => "image/jpeg",
                 ".gif" => "image/gif",
                 ".webp" => "image/webp",
-                ".svg" => "image/svg+xml",
                 _ => "application/octet-stream"
             };
         }
