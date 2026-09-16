@@ -60,3 +60,9 @@
 - advanced analytics
 - fully automated deployment
 - enterprise-grade role model expansion
+
+## Post-Beta Hardening Backlog
+
+Known limitations accepted for now, tracked for a deliberate follow-up rather than a quick patch:
+
+- **Email transport.** `Services/EmailService.cs` uses `System.Net.Mail.SmtpClient`, which Microsoft no longer recommends for new development (no modern/OAuth2 auth, limited TLS negotiation) and is a plausible contributor to the Gmail-delivery friction in `docs/FAQ.md`. Migrating to MailKit was evaluated during the 2026-09-15 design-review remediation: MailKit is **not currently a project dependency** (it and several other packages were removed from `TheCertMaster.csproj` in the "Refactor deployment and shared application code" commit, which also deleted a large duplicated `Deployment/source/` copy of the app that predated it). The open `dependabot/nuget/MailKit-4.16.0` branch predates that refactor and bumps a `MailKit` reference that no longer exists on `main`; it is stale and should be closed rather than merged as-is. Adding MailKit now would be a genuinely new dependency, not a wire-up of an existing one, and the migration touches SMTP authentication and TLS negotiation (a security-sensitive trust boundary per this repo's `AGENTS.md`). It deserves its own change with real STARTTLS/SSL and authenticated-credential verification, not a bundled hygiene fix.
