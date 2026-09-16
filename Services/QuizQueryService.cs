@@ -74,7 +74,7 @@ namespace TheCertMaster.Services
                 .ToList();
 
             var counts = questions
-                .GroupBy(q => CategoryNormalizer.Normalize(q.Quiz?.Category))
+                .GroupBy(q => CategoryNormalizer.Normalize(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
 
             return new CustomQuizAvailabilityDto

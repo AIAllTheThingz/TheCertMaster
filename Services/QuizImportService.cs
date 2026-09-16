@@ -400,7 +400,7 @@ namespace TheCertMaster.Services
                     throw new InvalidOperationException($"Question '{example.Key.QuestionText}' in quiz '{example.Key.QuizTitle}' references multiple image keys. Use one image key per question.");
                 }
 
-                var grouped = rows.GroupBy(r => new { Title = r.QuizTitle, Category = CategoryNormalizer.Normalize(r.Category) });
+                var grouped = rows.GroupBy(r => new { Title = r.QuizTitle, CategoryKey = CategoryNormalizer.NormalizeKey(r.Category) });
                 var packageId = TryGetPackageIdFromImportedFile(fileName);
                 var packageImagesDir = GetPackageImagesDirectory(packageId);
 
@@ -428,14 +428,17 @@ namespace TheCertMaster.Services
                     foreach (var quizGroup in grouped)
                     {
                         var quizTitle = quizGroup.Key.Title;
-                        var quizCategory = quizGroup.Key.Category;
+                        var categoryKey = quizGroup.Key.CategoryKey;
+                        // First row in this import wins for display casing when the same
+                        // category appears with different casing across rows or imports.
+                        var quizCategory = CategoryNormalizer.Normalize(quizGroup.First().Category);
 
                         var existing = _db.Quizzes
                             .Include(q => q.Questions)
                                 .ThenInclude(q => q.Answers)
                             .Include(q => q.Questions)
                                 .ThenInclude(q => q.Images)
-                            .FirstOrDefault(q => q.Title == quizTitle && (q.Category ?? "Uncategorized") == quizCategory);
+                            .FirstOrDefault(q => q.Title == quizTitle && (q.Category ?? "Uncategorized").ToLower() == categoryKey);
 
                         if (existing != null)
                         {

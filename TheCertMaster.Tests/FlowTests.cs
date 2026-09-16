@@ -228,6 +228,46 @@ public class FlowTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ImportedCategory_PreservesOriginalDisplayCasing()
+    {
+        var client = _factory.CreateClient();
+        var token = await _factory.LoginAsAdminAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var csv = string.Join(Environment.NewLine, new[]
+        {
+            "QuizTitle,Category,QuestionText,AnswerText,IsCorrect",
+            "Security Plus Practice Quiz,CompTIA Security+,What does CIA stand for?,Confidentiality Integrity Availability,true"
+        });
+
+        using var multipart = new MultipartFormDataContent();
+        multipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(csv)), "File", "casing-import.csv");
+
+        using var uploadResponse = await client.PostAsync("/api/import/upload", multipart);
+        uploadResponse.EnsureSuccessStatusCode();
+
+        var uploadMessage = await uploadResponse.Content.ReadAsStringAsync();
+        var savedFileName = uploadMessage.Split(':', 2)[1].Trim();
+
+        using var processResponse = await client.PostAsync($"/api/import/process/{savedFileName}", content: null);
+        processResponse.EnsureSuccessStatusCode();
+
+        using var categoriesResponse = await client.GetAsync("/api/categories");
+        categoriesResponse.EnsureSuccessStatusCode();
+        var categoriesBody = await categoriesResponse.Content.ReadAsStringAsync();
+
+        Assert.Contains("\"CompTIA Security+\"", categoriesBody);
+        Assert.DoesNotContain("Comptia Security+", categoriesBody);
+
+        using var quizListResponse = await client.GetAsync("/api/quiz?category=comptia%20security%2B");
+        quizListResponse.EnsureSuccessStatusCode();
+        var quizListBody = await quizListResponse.Content.ReadAsStringAsync();
+
+        Assert.Contains("\"CompTIA Security+\"", quizListBody);
+        Assert.Contains("Security Plus Practice Quiz", quizListBody);
+    }
+
+    [Fact]
     public async Task UploadPackage_ImportsQuizAndImagesInOneStep()
     {
         var client = _factory.CreateClient();

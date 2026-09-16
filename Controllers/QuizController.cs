@@ -35,10 +35,10 @@ namespace TheCertMaster.Controllers
             if (!string.IsNullOrWhiteSpace(category) &&
                 !string.Equals(category, "All", StringComparison.OrdinalIgnoreCase))
             {
-                var normalizedCategory = CategoryNormalizer.Normalize(category);
+                var normalizedCategoryKey = CategoryNormalizer.NormalizeKey(category);
 
                 query = query.Where(q =>
-                    (q.Category ?? "Uncategorized") == normalizedCategory);
+                    (q.Category ?? "Uncategorized").ToLower() == normalizedCategoryKey);
             }
 
             var quizzes = await query
