@@ -572,7 +572,89 @@ public class FlowTests : IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.BadRequest, registerResponse.StatusCode);
         var body = await registerResponse.Content.ReadAsStringAsync();
-        Assert.Contains("First name can only contain letters and spaces.", body);
+        Assert.Contains("First name can only contain letters, spaces, hyphens, and apostrophes.", body);
+    }
+
+    [Fact]
+    public async Task PublicRegistration_AcceptsRealNamesWithHyphensApostrophesAndAccents()
+    {
+        var client = _factory.CreateClient();
+        _factory.EmailService.Clear();
+
+        var registerPayload = JsonSerializer.Serialize(new
+        {
+            firstName = "Mary-Jane",
+            lastName = "O'Brien",
+            email = "maryjane@example.com",
+            password = "Password!123",
+            confirmPassword = "Password!123"
+        });
+
+        using var registerResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(registerPayload, Encoding.UTF8, "application/json"));
+        registerResponse.EnsureSuccessStatusCode();
+
+        var accentedPayload = JsonSerializer.Serialize(new
+        {
+            firstName = "José",
+            lastName = "García",
+            email = "jose@example.com",
+            password = "Password!123",
+            confirmPassword = "Password!123"
+        });
+
+        using var accentedResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(accentedPayload, Encoding.UTF8, "application/json"));
+        accentedResponse.EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var maryJane = await userManager.FindByEmailAsync("maryjane@example.com");
+        Assert.NotNull(maryJane);
+        Assert.Equal("Mary-Jane", maryJane!.FirstName);
+        Assert.Equal("O'Brien", maryJane.LastName);
+
+        var jose = await userManager.FindByEmailAsync("jose@example.com");
+        Assert.NotNull(jose);
+        Assert.Equal("José", jose!.FirstName);
+        Assert.Equal("García", jose.LastName);
+    }
+
+    [Fact]
+    public async Task PublicRegistration_StillRejectsDigitsAndMarkup_InProfileNames()
+    {
+        var client = _factory.CreateClient();
+
+        var scriptPayload = JsonSerializer.Serialize(new
+        {
+            firstName = "<script>",
+            lastName = "User",
+            email = "scriptname@example.com",
+            password = "Password!123",
+            confirmPassword = "Password!123"
+        });
+
+        using var scriptResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(scriptPayload, Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.BadRequest, scriptResponse.StatusCode);
+
+        var digitPayload = JsonSerializer.Serialize(new
+        {
+            firstName = "John3",
+            lastName = "User",
+            email = "digitname@example.com",
+            password = "Password!123",
+            confirmPassword = "Password!123"
+        });
+
+        using var digitResponse = await client.PostAsync(
+            "/api/auth/public-register",
+            new StringContent(digitPayload, Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.BadRequest, digitResponse.StatusCode);
     }
 
     [Fact]
@@ -829,7 +911,7 @@ public class FlowTests : IAsyncLifetime
 
         Assert.Equal(HttpStatusCode.BadRequest, updateResponse.StatusCode);
         var body = await updateResponse.Content.ReadAsStringAsync();
-        Assert.Contains("First name can only contain letters and spaces.", body);
+        Assert.Contains("First name can only contain letters, spaces, hyphens, and apostrophes.", body);
     }
 
     [Fact]

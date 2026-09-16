@@ -5,7 +5,11 @@ namespace TheCertMaster.Validation
     public static class PlainTextInputValidator
     {
         private static readonly Regex MultiWhitespaceRegex = new(@"\s+", RegexOptions.Compiled);
-        private static readonly Regex PersonNameRegex = new(@"^[A-Za-z]+(?: [A-Za-z]+)*$", RegexOptions.Compiled);
+
+        // Unicode letters plus single hyphen/apostrophe/space separators between letter
+        // groups (e.g. "Mary-Jane", "O'Brien", "José"). Still rejects digits, angle
+        // brackets, control characters, and leading/trailing or repeated separators.
+        private static readonly Regex PersonNameRegex = new(@"^\p{L}+(?:[ '\-]\p{L}+)*$", RegexOptions.Compiled);
 
         public static bool TryNormalizePersonName(
             string? value,
@@ -37,7 +41,7 @@ namespace TheCertMaster.Validation
 
             if (!PersonNameRegex.IsMatch(normalized))
             {
-                error = $"{fieldName} can only contain letters and spaces.";
+                error = $"{fieldName} can only contain letters, spaces, hyphens, and apostrophes.";
                 return false;
             }
 

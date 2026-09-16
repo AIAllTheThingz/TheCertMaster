@@ -36,6 +36,7 @@ The format is based on Keep a Changelog, and this project follows semantic-style
 - Public registration no longer reveals whether an email address already has a confirmed account; a repeat registration attempt now gets the same generic success response as a first-time registration, and no duplicate email is sent
 - Quiz submission endpoints (`/api/quiz/{id}/submit`, `/api/quiz/custom/submit`) now share the same rate-limiting policy as quiz loading, reject requests with an unreasonably large number of delivered questions or answers, and derive the guest per-category question cap from the categories actually present in the resolved questions instead of trusting the client-supplied category list
 - Certification category names imported with vendor-specific capitalization (e.g. "CompTIA Security+") are now displayed exactly as imported instead of being rewritten to title case (e.g. "Comptia Security+"); matching/de-duplication across different casings of the same category is unaffected and uses first-seen casing for display
+- Profile name fields now accept hyphens, apostrophes, and accented/non-Latin letters (e.g. "Mary-Jane", "O'Brien", "José"), not just plain ASCII letters and spaces; digits, angle brackets, and other unsafe characters are still rejected
 
 ## [v0.1.0-alpha] - 2026-03-17
 
