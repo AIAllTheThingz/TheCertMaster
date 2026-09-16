@@ -47,7 +47,6 @@ namespace TheCertMaster.Controllers
             }
         }
 
-        //[Authorize(Roles ="Admin")]
         [Authorize(Roles = "Admin")]
         [HttpPost("process/{fileName}")]
         public async Task<IActionResult> Process(string fileName)
