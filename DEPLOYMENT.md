@@ -465,6 +465,8 @@ Migration expectations:
 
 Before replacing a live release, back up the database and copy the current `App_Data` (including Data Protection keys) and `wwwroot\uploads\images` directories. Extract each verified archive into a fresh release root and switch IIS only after manifest, migration, and smoke checks pass. Never overwrite the active publish directory in place. If a migration has run, restoring the prior application binaries alone may not be schema-compatible; use the database recovery plan and the prior verified artifact together. The installer does not automatically roll back a failed migration.
 
+`Program.cs` protects the stored SMTP password with ASP.NET Core Data Protection using `ProtectKeysWithDpapi(protectToLocalMachine: true)`, which ties the encryption key to the specific machine that wrote it. Restoring `App_Data` (including `smtp_settings.json`) onto **new or replacement hardware** will not carry over a usable SMTP password: the app cannot decrypt it on the new machine and treats it as blank, silently disabling outbound email until reconfigured. After a restore to new hardware, re-enter the SMTP credentials (e.g. via `configure-smtp-test.ps1` or the admin SMTP settings page) rather than assuming the restored `App_Data` is sufficient.
+
 ## ASPNETCORE_ENVIRONMENT
 
 Set:
