@@ -423,81 +423,85 @@ namespace TheCertMaster.Services
 
                 int quizCount = 0, questionCount = 0, answerCount = 0;
 
-                foreach (var quizGroup in grouped)
+                await using (var transaction = await _db.Database.BeginTransactionAsync())
                 {
-                    var quizTitle = quizGroup.Key.Title;
-                    var quizCategory = quizGroup.Key.Category;
-
-                    var existing = _db.Quizzes
-                        .Include(q => q.Questions)
-                            .ThenInclude(q => q.Answers)
-                        .Include(q => q.Questions)
-                            .ThenInclude(q => q.Images)
-                        .FirstOrDefault(q => q.Title == quizTitle && (q.Category ?? "Uncategorized") == quizCategory);
-
-                    if (existing != null)
+                    foreach (var quizGroup in grouped)
                     {
-                        _db.Quizzes.Remove(existing);
-                        await _db.SaveChangesAsync();
-                    }
+                        var quizTitle = quizGroup.Key.Title;
+                        var quizCategory = quizGroup.Key.Category;
 
-                    var quiz = new Models.Quiz { Title = quizTitle, Category = quizCategory == "Uncategorized" ? null : quizCategory };
-                    _db.Quizzes.Add(quiz);
-                    quizCount++;
+                        var existing = _db.Quizzes
+                            .Include(q => q.Questions)
+                                .ThenInclude(q => q.Answers)
+                            .Include(q => q.Questions)
+                                .ThenInclude(q => q.Images)
+                            .FirstOrDefault(q => q.Title == quizTitle && (q.Category ?? "Uncategorized") == quizCategory);
 
-                    var questions = quizGroup.GroupBy(r => r.QuestionText);
-
-                    int orderIndex = 0;
-                    foreach (var qGroup in questions)
+                        if (existing != null)
                         {
-                            var question = new Models.Question
-                            {
-                                Quiz = quiz,
-                                Text = qGroup.Key,
-                            OrderIndex = orderIndex++,
-                            AllowMultiple = qGroup.Count(r => r.IsCorrect) > 1
-                        };
-                        _db.Questions.Add(question);
-                        questionCount++;
-
-                        int ansOrder = 0;
-                        foreach (var row in qGroup)
-                        {
-                            var answer = new Models.Answer
-                            {
-                                Question = question,
-                                Text = row.AnswerText,
-                                IsCorrect = row.IsCorrect,
-                                OrderIndex = ansOrder++
-                            };
-                            _db.Answers.Add(answer);
-                            answerCount++;
+                            _db.Quizzes.Remove(existing);
+                            await _db.SaveChangesAsync();
                         }
 
-                        var questionImageKeys = qGroup
-                            .Select(r => r.QuestionImgKey)
-                            .Where(v => !string.IsNullOrWhiteSpace(v))
-                            .SelectMany(SplitImageKeys)
-                            .Distinct(StringComparer.OrdinalIgnoreCase)
-                            .ToList();
+                        var quiz = new Models.Quiz { Title = quizTitle, Category = quizCategory == "Uncategorized" ? null : quizCategory };
+                        _db.Quizzes.Add(quiz);
+                        quizCount++;
 
-                        foreach (var imageKey in questionImageKeys)
-                        {
-                            foreach (var imageFile in ResolveImageFiles(packageImagesDir, imageKey))
+                        var questions = quizGroup.GroupBy(r => r.QuestionText);
+
+                        int orderIndex = 0;
+                        foreach (var qGroup in questions)
                             {
-                                _db.Images.Add(new Models.Image
+                                var question = new Models.Question
                                 {
-                                    QuestionId = question.Id,
-                                    FileName = imageFile,
-                                    ContentType = GetContentType(imageFile),
-                                    Url = BuildImageUrl(packageId, imageFile)
-                                });
+                                    Quiz = quiz,
+                                    Text = qGroup.Key,
+                                OrderIndex = orderIndex++,
+                                AllowMultiple = qGroup.Count(r => r.IsCorrect) > 1
+                            };
+                            _db.Questions.Add(question);
+                            questionCount++;
+
+                            int ansOrder = 0;
+                            foreach (var row in qGroup)
+                            {
+                                var answer = new Models.Answer
+                                {
+                                    Question = question,
+                                    Text = row.AnswerText,
+                                    IsCorrect = row.IsCorrect,
+                                    OrderIndex = ansOrder++
+                                };
+                                _db.Answers.Add(answer);
+                                answerCount++;
+                            }
+
+                            var questionImageKeys = qGroup
+                                .Select(r => r.QuestionImgKey)
+                                .Where(v => !string.IsNullOrWhiteSpace(v))
+                                .SelectMany(SplitImageKeys)
+                                .Distinct(StringComparer.OrdinalIgnoreCase)
+                                .ToList();
+
+                            foreach (var imageKey in questionImageKeys)
+                            {
+                                foreach (var imageFile in ResolveImageFiles(packageImagesDir, imageKey))
+                                {
+                                    _db.Images.Add(new Models.Image
+                                    {
+                                        QuestionId = question.Id,
+                                        FileName = imageFile,
+                                        ContentType = GetContentType(imageFile),
+                                        Url = BuildImageUrl(packageId, imageFile)
+                                    });
+                                }
                             }
                         }
                     }
-                }
 
-                await _db.SaveChangesAsync();
+                    await _db.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
 
                 run.Rows = rows.Count;
                 run.Quizzes = quizCount;

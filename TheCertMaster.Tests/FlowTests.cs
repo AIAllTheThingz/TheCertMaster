@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.IO.Compression;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TheCertMaster.Data;
 using TheCertMaster.Models;
@@ -317,6 +318,68 @@ public class FlowTests : IAsyncLifetime
 
         var body = await uploadResponse.Content.ReadAsStringAsync();
         Assert.Contains("Missing image files for key(s): missing-diagram", body);
+    }
+
+    [Fact]
+    public async Task ProcessCsv_WhenLaterQuizFailsToSave_RollsBackPreviouslyReplacedQuiz()
+    {
+        var client = _factory.CreateClient();
+        var token = await _factory.LoginAsAdminAsync(client);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var initialCsv = string.Join(Environment.NewLine, new[]
+        {
+            "QuizTitle,Category,QuestionText,AnswerText,IsCorrect",
+            "Rollback Quiz A,Rollback,What is the original question?,Original answer,true"
+        });
+
+        using (var multipart = new MultipartFormDataContent())
+        {
+            multipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(initialCsv)), "File", "rollback-initial.csv");
+            using var uploadResponse = await client.PostAsync("/api/import/upload", multipart);
+            uploadResponse.EnsureSuccessStatusCode();
+
+            var uploadMessage = await uploadResponse.Content.ReadAsStringAsync();
+            var savedFileName = uploadMessage.Split(':', 2)[1].Trim();
+
+            using var processResponse = await client.PostAsync($"/api/import/process/{savedFileName}", content: null);
+            processResponse.EnsureSuccessStatusCode();
+        }
+
+        // The second import replaces "Rollback Quiz A" but also contains a quiz
+        // whose title is too long for the database column. That forces the
+        // deferred SaveChangesAsync() (covering every group in this import) to
+        // fail after quiz A has already been removed from the change tracker.
+        var overlongTitle = new string('B', 300);
+        var failingCsv = string.Join(Environment.NewLine, new[]
+        {
+            "QuizTitle,Category,QuestionText,AnswerText,IsCorrect",
+            "Rollback Quiz A,Rollback,What is the REPLACEMENT question?,Replacement answer,true",
+            $"{overlongTitle},Rollback,Some question,Some answer,true"
+        });
+
+        using var failingMultipart = new MultipartFormDataContent();
+        failingMultipart.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(failingCsv)), "File", "rollback-failing.csv");
+        using var failingUploadResponse = await client.PostAsync("/api/import/upload", failingMultipart);
+        failingUploadResponse.EnsureSuccessStatusCode();
+
+        var failingUploadMessage = await failingUploadResponse.Content.ReadAsStringAsync();
+        var failingSavedFileName = failingUploadMessage.Split(':', 2)[1].Trim();
+
+        using var failingProcessResponse = await client.PostAsync($"/api/import/process/{failingSavedFileName}", content: null);
+        Assert.False(failingProcessResponse.IsSuccessStatusCode);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<QuizDbContext>();
+
+        var quizA = db.Quizzes
+            .Include(q => q.Questions).ThenInclude(q => q.Answers)
+            .SingleOrDefault(q => q.Title == "Rollback Quiz A");
+
+        Assert.NotNull(quizA);
+        Assert.Contains(quizA!.Questions, q => q.Text == "What is the original question?");
+        Assert.DoesNotContain(quizA.Questions, q => q.Text == "What is the REPLACEMENT question?");
+        Assert.False(db.Quizzes.Any(q => q.Title == overlongTitle));
     }
 
     [Fact]

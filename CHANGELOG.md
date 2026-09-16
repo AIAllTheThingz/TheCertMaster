@@ -29,6 +29,10 @@ The format is based on Keep a Changelog, and this project follows semantic-style
 - Swagger is now explicitly controlled by configuration instead of environment alone
 - Quiz setup now shows a clearer total-question summary before loading
 
+### Fixed
+
+- Bulk quiz CSV import now runs each import as a single database transaction, so a failure partway through an import (e.g. a later quiz's data failing to save) rolls back any quizzes already removed for replacement instead of leaving them permanently deleted
+
 ## [v0.1.0-alpha] - 2026-03-17
 
 ### Added
