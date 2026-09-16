@@ -16,6 +16,7 @@ namespace TheCertMaster.Controllers
     {
         private const double PassingScorePercent = 70.0;
         private const int GuestQuestionLimit = 5;
+        private const int MaxSubmittedItemsPerRequest = 500;
         private readonly QuizQueryService _query;
         private readonly QuizDbContext _db;
 
@@ -85,11 +86,15 @@ namespace TheCertMaster.Controllers
         }
 
         // Submits an attempt and returns a score. Correct answers never leave the server.
+        [EnableRateLimiting("QuizLoad")]
         [HttpPost("{quizId:guid}/submit")]
         public async Task<IActionResult> Submit(Guid quizId, [FromBody] QuizAttemptSubmitDto attempt)
         {
             if (attempt is null)
                 return BadRequest("Missing request body.");
+
+            if (HasTooManySubmittedItems(attempt))
+                return BadRequest($"Too many delivered questions or answers submitted. The limit is {MaxSubmittedItemsPerRequest} per request.");
 
             var quiz = await _db.Quizzes
                 .Include(q => q.Questions)
@@ -135,11 +140,15 @@ namespace TheCertMaster.Controllers
             return Ok(result);
         }
 
+        [EnableRateLimiting("QuizLoad")]
         [HttpPost("custom/submit")]
         public async Task<IActionResult> SubmitCustom([FromBody] QuizAttemptSubmitDto attempt)
         {
             if (attempt is null)
                 return BadRequest("Missing request body.");
+
+            if (HasTooManySubmittedItems(attempt))
+                return BadRequest($"Too many delivered questions or answers submitted. The limit is {MaxSubmittedItemsPerRequest} per request.");
 
             var deliveredQuestionIds = (attempt.DeliveredQuestionIds ?? new List<Guid>())
                 .Distinct()
@@ -160,10 +169,11 @@ namespace TheCertMaster.Controllers
 
             if (IsGuestUser())
             {
-                var guestCustomQuestionLimit = Math.Max(1, (attempt.SelectedCategories ?? new List<string>())
-                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                var resolvedCategoryCount = Math.Max(1, questions
+                    .Select(q => string.IsNullOrWhiteSpace(q.Quiz?.Category) ? "Uncategorized" : q.Quiz!.Category!)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Count()) * GuestQuestionLimit;
+                    .Count());
+                var guestCustomQuestionLimit = resolvedCategoryCount * GuestQuestionLimit;
 
                 if (questions.Count > guestCustomQuestionLimit)
                     return BadRequest($"Guest users can submit up to {guestCustomQuestionLimit} questions for this category selection.");
@@ -213,6 +223,12 @@ namespace TheCertMaster.Controllers
         private bool IsGuestUser()
         {
             return User?.Identity?.IsAuthenticated != true;
+        }
+
+        private static bool HasTooManySubmittedItems(QuizAttemptSubmitDto attempt)
+        {
+            return (attempt.DeliveredQuestionIds?.Count ?? 0) > MaxSubmittedItemsPerRequest
+                || (attempt.Answers?.Count ?? 0) > MaxSubmittedItemsPerRequest;
         }
 
         private static QuizAttemptResultDto GradeQuestions(

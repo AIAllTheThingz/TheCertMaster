@@ -1184,4 +1184,108 @@ public class FlowTests : IAsyncLifetime
 
         Assert.Equal(144, deliveredQuestions.Count);
     }
+
+    [Fact]
+    public async Task SubmitCustom_GuestCannotInflateQuestionCap_WithFabricatedCategoryNames()
+    {
+        var client = _factory.CreateClient();
+
+        List<Guid> questionIds;
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<QuizDbContext>();
+
+            foreach (var category in new[] { "Routing", "Security" })
+            {
+                var quiz = new Quiz { Title = $"{category} Cap Bypass Quiz", Category = category };
+
+                for (var i = 1; i <= 10; i++)
+                {
+                    var question = new Question { Text = $"{category} Cap Question {i}?", OrderIndex = i, AllowMultiple = false };
+                    question.Answers.Add(new Answer { Text = "Correct", IsCorrect = true, OrderIndex = 1 });
+                    question.Answers.Add(new Answer { Text = "Incorrect", IsCorrect = false, OrderIndex = 2 });
+                    quiz.Questions.Add(question);
+                }
+
+                db.Quizzes.Add(quiz);
+            }
+
+            await db.SaveChangesAsync();
+
+            questionIds = await db.Questions
+                .Where(q => q.Quiz!.Title == "Routing Cap Bypass Quiz" || q.Quiz!.Title == "Security Cap Bypass Quiz")
+                .Select(q => q.Id)
+                .ToListAsync();
+        }
+
+        Assert.Equal(20, questionIds.Count);
+
+        // Only two real categories are actually resolved (10 questions each), so the
+        // server-verified guest cap should be 2 * 5 = 10, regardless of how many
+        // fabricated category names the client claims in SelectedCategories.
+        var fabricatedCategories = new[] { "FakeCat1", "FakeCat2", "FakeCat3", "FakeCat4", "FakeCat5" };
+        var payload = JsonSerializer.Serialize(new
+        {
+            quizTitle = "Cap Bypass Attempt",
+            selectedCategories = fabricatedCategories,
+            deliveredQuestionIds = questionIds,
+            Answers = Array.Empty<object>()
+        });
+
+        using var response = await client.PostAsync(
+            "/api/quiz/custom/submit",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("up to 10 questions", body);
+    }
+
+    [Fact]
+    public async Task Submit_WithExcessiveDeliveredQuestionIds_ReturnsBadRequest()
+    {
+        var client = _factory.CreateClient();
+
+        using var listResponse = await client.GetAsync("/api/quiz");
+        listResponse.EnsureSuccessStatusCode();
+        using var listDoc = JsonDocument.Parse(await listResponse.Content.ReadAsStringAsync());
+        var quizId = listDoc.RootElement.EnumerateArray()
+            .First(e => string.Equals(e.GetProperty("Title").GetString(), "Seed Quiz", StringComparison.Ordinal))
+            .GetProperty("Id")
+            .GetGuid();
+
+        var oversizedIds = Enumerable.Range(0, 600).Select(_ => Guid.NewGuid()).ToList();
+        var payload = JsonSerializer.Serialize(new { deliveredQuestionIds = oversizedIds, Answers = Array.Empty<object>() });
+
+        using var response = await client.PostAsync(
+            $"/api/quiz/{quizId}/submit",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Submit_RepeatedRapidGuestRequests_AreRateLimited_LikeQuizLoad()
+    {
+        var client = _factory.CreateClient();
+
+        using var listResponse = await client.GetAsync("/api/quiz");
+        listResponse.EnsureSuccessStatusCode();
+        using var listDoc = JsonDocument.Parse(await listResponse.Content.ReadAsStringAsync());
+        var quizId = listDoc.RootElement.EnumerateArray()
+            .First(e => string.Equals(e.GetProperty("Title").GetString(), "Seed Quiz", StringComparison.Ordinal))
+            .GetProperty("Id")
+            .GetGuid();
+
+        HttpStatusCode? rateLimitedStatus = null;
+        for (var i = 0; i < 65 && rateLimitedStatus == null; i++)
+        {
+            using var content = new StringContent("{}", Encoding.UTF8, "application/json");
+            using var response = await client.PostAsync($"/api/quiz/{quizId}/submit", content);
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                rateLimitedStatus = response.StatusCode;
+        }
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, rateLimitedStatus);
+    }
 }
