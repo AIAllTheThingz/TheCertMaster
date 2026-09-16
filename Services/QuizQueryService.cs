@@ -63,15 +63,13 @@ namespace TheCertMaster.Services
         public async Task<CustomQuizAvailabilityDto> GetAvailabilityForCategoriesAsync(IEnumerable<string> categories)
         {
             var normalizedCategories = NormalizeCategories(categories);
+            var categoryKeys = normalizedCategories.Select(c => c.ToLowerInvariant()).ToList();
 
             var questions = await _db.Questions
                 .AsNoTracking()
                 .Include(q => q.Quiz)
+                .Where(q => categoryKeys.Contains((q.Quiz!.Category ?? "Uncategorized").ToLower()))
                 .ToListAsync();
-
-            questions = questions
-                .Where(q => normalizedCategories.Contains(CategoryNormalizer.Normalize(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase))
-                .ToList();
 
             var counts = questions
                 .GroupBy(q => CategoryNormalizer.Normalize(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase)
@@ -91,16 +89,14 @@ namespace TheCertMaster.Services
             {
                 return null;
             }
+            var categoryKeys = normalizedCategories.Select(c => c.ToLowerInvariant()).ToList();
 
             var questions = await _db.Questions
                 .Include(q => q.Answers)
                 .Include(q => q.Images)
                 .Include(q => q.Quiz)
+                .Where(q => categoryKeys.Contains((q.Quiz!.Category ?? "Uncategorized").ToLower()))
                 .ToListAsync();
-
-            questions = questions
-                .Where(q => normalizedCategories.Contains(CategoryNormalizer.Normalize(q.Quiz?.Category), StringComparer.OrdinalIgnoreCase))
-                .ToList();
 
             if (questions.Count == 0)
             {
